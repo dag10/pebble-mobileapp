@@ -284,12 +284,7 @@ enum class QuicklaunchWatchPref(
     override val isDebugSetting: Boolean = false,
     override val description: String? = null,
 ) : WatchPref<QuickLaunchSetting> {
-    QlUp("qlUp", "Quick Launch: Hold Up", QuickLaunchSetting(false, null)),
-    QlDown("qlDown", "Quick Launch: Hold Down", QuickLaunchSetting(false, null)),
-    QlSelect("qlSelect", "Quick Launch: Hold Select", QuickLaunchSetting(false, null)),
-    QlBack("qlBack", "Quick Launch: Hold Back", QuickLaunchSetting(true, QUIET_TIME_TOGGLE_UUID)),
-    QlComboBackUp("qlComboBackUp", "Quick Launch: Hold Combo Back+Up", QuickLaunchSetting(false, null)),
-    QlComboUpDown("qlComboUpDown", "Quick Launch: Hold Combo Up+Down", QuickLaunchSetting(false, null)),
+    // In the order of the watch's Settings > Quick Launch.
     QlSingleClickUp(
         "qlSingleClickUp",
         "Quick Launch: Tap Up",
@@ -300,6 +295,24 @@ enum class QuicklaunchWatchPref(
         "Quick Launch: Tap Down",
         QuickLaunchSetting(true, TIMELINE_FUTURE_UUID)
     ),
+    QlSingleClickBack("qlSingleClickBack", "Quick Launch: Tap Back", QuickLaunchSetting(false, null)),
+    QlUp("qlUp", "Quick Launch: Hold Up", QuickLaunchSetting(false, null)),
+    QlSelect("qlSelect", "Quick Launch: Hold Center", QuickLaunchSetting(false, null)),
+    QlDown("qlDown", "Quick Launch: Hold Down", QuickLaunchSetting(false, null)),
+    QlBack("qlBack", "Quick Launch: Hold Back", QuickLaunchSetting(true, QUIET_TIME_TOGGLE_UUID)),
+    // Tap Back+Up/Down kept the keys of the Squeeze gestures they replaced on the watch.
+    QlTapBackUp("qlSqueezeBackUp", "Quick Launch: Tap Back+Up", QuickLaunchSetting(false, null)),
+    QlTapBackDown("qlSqueezeBackDown", "Quick Launch: Tap Back+Down", QuickLaunchSetting(false, null)),
+    QlTapBackSelect("qlTapBackSelect", "Quick Launch: Tap Back+Center", QuickLaunchSetting(false, null)),
+    QlDoubleTapBackUp("qlDoubleTapBackUp", "Quick Launch: Double Tap Back+Up", QuickLaunchSetting(false, null)),
+    QlDoubleTapBackDown("qlDoubleTapBackDown", "Quick Launch: Double Tap Back+Down", QuickLaunchSetting(false, null)),
+    QlDoubleTapBackSelect("qlDoubleTapBackSelect", "Quick Launch: Double Tap Back+Center", QuickLaunchSetting(false, null)),
+    QlTripleTapBackUp("qlTripleTapBackUp", "Quick Launch: Triple Tap Back+Up", QuickLaunchSetting(false, null)),
+    QlTripleTapBackDown("qlTripleTapBackDown", "Quick Launch: Triple Tap Back+Down", QuickLaunchSetting(false, null)),
+    QlTripleTapBackSelect("qlTripleTapBackSelect", "Quick Launch: Triple Tap Back+Center", QuickLaunchSetting(false, null)),
+    // Not in the watch's settings menu, but the watch still runs them.
+    QlComboBackUp("qlComboBackUp", "Quick Launch: Hold Combo Back+Up", QuickLaunchSetting(false, null)),
+    QlComboUpDown("qlComboUpDown", "Quick Launch: Hold Combo Up+Down", QuickLaunchSetting(false, null)),
     ;
 
     override val type = WatchPrefType.TypeQuickLaunch
