@@ -413,7 +413,7 @@ struct SetQuietTimeIntent: AppIntent {
 @available(iOS 16.0, *)
 struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
     static var title: LocalizedStringResource = "Pebble Quiet Time"
-    static var description = IntentDescription("Turn on Quiet Time on your watch while this Focus is on. Needs DrewPebbleOS, with Quiet Time > iOS Focus enabled.")
+    static var description = IntentDescription("Turn on Quiet Time on your watch while this Focus is on. Needs DrewPebbleOS.")
 
     @Parameter(title: "Quiet Time", default: false)
     var quietTime: Bool

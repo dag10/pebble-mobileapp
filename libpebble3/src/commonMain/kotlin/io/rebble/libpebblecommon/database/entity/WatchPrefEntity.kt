@@ -272,7 +272,6 @@ enum class BoolWatchPref(
     CalendarAwareQuietTime("dndSmartEnabled", "Quiet Time - Calendar Aware", false, description = "Automatically enable Quiet Time during calendar events"),
     QuietTimeWeekdayScheduleEnabled("dndWeekdayScheduleEnabled", "Quiet Time - Weekday Schedule", false, description = "Automatically enable Quiet Time during the scheduled hours, Monday to Friday"),
     QuietTimeWeekendScheduleEnabled("dndWeekendScheduleEnabled", "Quiet Time - Weekend Schedule", false, description = "Automatically enable Quiet Time during the scheduled hours, Saturday and Sunday"),
-    QuietTimeIosFocus("drewDndFocusEnabled", "Quiet Time - iOS Focus", false, description = "Automatically enable Quiet Time while your iPhone is in a Focus that has the Pebble Quiet Time filter (add it in iPhone Settings > Focus > a Focus > Focus Filters). Requires DrewPebbleOS.", drewPebbleOsOnly = true),
     IosFocusActive("drewDndFocusActive", "iOS Focus Active", false, drewPebbleOsOnly = true, isInternal = true),
     AlternativeNotificationStyle("notifDesignStyle", "Alternative notification banner Style (B/W watches)", false),
     NotificationVibeDelay("notifVibeDelay", "Delay Notification Vibration", true, description = "Delay notification vibration until the notification is visible (after animations)"),
