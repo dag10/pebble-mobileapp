@@ -382,6 +382,8 @@ enum class ProtocolCapsFlag(val value: Int) {
     SupportsNotificationWindowState(26),
     SupportsAppPermissions(27),
     SupportsMultipleLanguagePacks(28),
+    // DrewPebbleOS only. The watch keeps the low 32 bits, so this sits well above upstream's.
+    SupportsDrewFindPhone(30),
     ;
 
     companion object {
@@ -458,7 +460,9 @@ open class SystemMessage(message: Message) : SystemPacket(endpoint) {
         LanguagePackRemoveRequest(0x0fu),
         LanguagePackRemoveResponse(0x10u),
         LanguageSelectRequest(0x11u),
-        LanguageSelectResponse(0x13u)
+        LanguageSelectResponse(0x13u),
+        DrewFindPhone(0xd0u),
+        DrewFindPhoneStop(0xd1u),
     }
 
     val command = SUByte(m, 0x0u)
@@ -488,6 +492,12 @@ open class SystemMessage(message: Message) : SystemPacket(endpoint) {
         val response = SUByte(m)
     }
     class FirmwareUpdateStatusRequest: SystemMessage(Message.FirmwareUpdateStatus)
+
+    /** DrewPebbleOS asks the phone to play a sound so it can be found. */
+    class DrewFindPhone: SystemMessage(Message.DrewFindPhone)
+
+    /** DrewPebbleOS asks the phone to stop that sound early. */
+    class DrewFindPhoneStop: SystemMessage(Message.DrewFindPhoneStop)
 
     /**
      * Per-object status of a partially-transferred firmware update, so it can be resumed.
@@ -658,6 +668,14 @@ fun systemPacketsRegister() {
         SystemMessage.endpoint,
         SystemMessage.Message.FirmwareUpdateStatusResponse.value
     ) { SystemMessage.FirmwareUpdateStatusResponse() }
+    PacketRegistry.register(
+        SystemMessage.endpoint,
+        SystemMessage.Message.DrewFindPhone.value
+    ) { SystemMessage.DrewFindPhone() }
+    PacketRegistry.register(
+        SystemMessage.endpoint,
+        SystemMessage.Message.DrewFindPhoneStop.value
+    ) { SystemMessage.DrewFindPhoneStop() }
 
     PacketRegistry.register(SystemMessage.endpoint, SystemMessage.Message.LanguagePacksResponse.value) {
         SystemMessage.LanguagePacksResponse()
