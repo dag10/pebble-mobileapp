@@ -104,9 +104,17 @@ private val SCHEDULE_HOURS = mapOf<WatchPref<*>, WatchPref<*>>(
     BoolWatchPref.QuietTimeWeekendScheduleEnabled to ScheduleWatchPref.QuietTimeWeekendSchedule,
 )
 
-/** Hides phone-owned state, and the iOS Focus setting on other platforms. */
-internal fun List<WatchPreference<*>>.hideUnavailablePrefs(isIOS: Boolean): List<WatchPreference<*>> =
-    filterNot { it.pref.isInternal || (it.pref == BoolWatchPref.QuietTimeIosFocus && !isIOS) }
+internal fun List<WatchPreference<*>>.hideInternalPrefs(): List<WatchPreference<*>> =
+    filterNot { it.pref.isInternal }
+
+/** Explains the Pebble Quiet Time Focus Filter, which is set up in iPhone Settings. */
+private fun iosFocusQuietTimeInfo() = basicSettingsActionItem(
+    title = "Quiet Time - iOS Focus",
+    topLevelType = TopLevelType.Watch,
+    section = Section.QuietTime,
+    description = "Quiet Time turns on automatically with any Focus that has the Pebble Quiet Time filter. Add it in iPhone Settings > Focus > (a Focus) > Focus Filters. Requires DrewPebbleOS.",
+    keywords = "focus do not disturb sleep",
+)
 
 /** Schedule hours sit directly under the toggle they belong to, and only while it is on. */
 internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchPreference<*>> {
@@ -123,14 +131,14 @@ fun watchPrefs(): List<SettingsItem> {
     val coreConfigHolder = koinInject<CoreConfigHolder>()
     val platform = koinInject<Platform>()
     val allSettings by libPebble.watchPrefs.collectAsState(emptyList())
-    val settings = remember(allSettings, platform) { allSettings.hideUnavailablePrefs(platform.isIOS) }
+    val settings = remember(allSettings) { allSettings.hideInternalPrefs() }
     val quickLaunchOptions = quickLaunchOptions(libPebble)
-    val mapped = remember(settings, quickLaunchOptions) {
+    val mapped = remember(settings, quickLaunchOptions, platform) {
         settings.hidePresetManagedBacklightPrefs()
             .groupQuietTimeScheduleHours()
             .hideFoldedBacklightColorPrefs()
-            .map { item ->
-                when (val pref = item.pref) {
+            .flatMap { item ->
+                val mappedItem = when (val pref = item.pref) {
                     is BoolWatchPref -> booleanPref(pref.castParent(item), libPebble)
                     is EnumWatchPref -> enumPref(pref.castParent(item), libPebble)
                     is QuicklaunchWatchPref -> quicklaunchPref(pref.castParent(item), libPebble, quickLaunchOptions)
@@ -144,6 +152,10 @@ fun watchPrefs(): List<SettingsItem> {
                     is NumberWatchPref -> numberPref(pref.castParent(item), libPebble)
                     is ScheduleWatchPref -> schedulePref(pref.castParent(item), libPebble)
                 }
+                // Sits after Calendar Aware, as on the watch
+                val focusInfo = iosFocusQuietTimeInfo()
+                    .takeIf { platform.isIOS && item.pref == BoolWatchPref.CalendarAwareQuietTime }
+                listOfNotNull(mappedItem, focusInfo)
             }
     }
     val showConfirmReset = remember { mutableStateOf(false) }
@@ -214,7 +226,6 @@ fun WatchPref<*>.section(): Section = when (this) {
     BoolWatchPref.CalendarAwareQuietTime -> Section.QuietTime
     BoolWatchPref.QuietTimeWeekdayScheduleEnabled -> Section.QuietTime
     BoolWatchPref.QuietTimeWeekendScheduleEnabled -> Section.QuietTime
-    BoolWatchPref.QuietTimeIosFocus -> Section.QuietTime
     BoolWatchPref.IosFocusActive -> Section.QuietTime
     ScheduleWatchPref.QuietTimeWeekdaySchedule -> Section.QuietTime
     ScheduleWatchPref.QuietTimeWeekendSchedule -> Section.QuietTime
