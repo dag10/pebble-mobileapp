@@ -144,6 +144,7 @@ import coredevices.libindex.ui.components.PressPatternDot
 import coredevices.pebble.PebbleDeepLinkHandler
 import coredevices.pebble.PebbleFeatures
 import coredevices.pebble.account.PebbleAccount
+import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.firmware.isCoreDevice
 import coredevices.pebble.rememberLibPebble
@@ -172,6 +173,7 @@ import io.rebble.libpebblecommon.connection.CommonConnectedDevice
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDevice
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDeviceInRecovery
+import io.rebble.libpebblecommon.connection.ConnectedWatchInfo
 import io.rebble.libpebblecommon.connection.ConnectingPebbleDevice
 import io.rebble.libpebblecommon.connection.ConnectionFailureReason
 import io.rebble.libpebblecommon.connection.DisconnectingPebbleDevice
@@ -2060,6 +2062,83 @@ fun WatchHeader(watch: PebbleDevice) {
 }
 
 @Composable
+private fun drewPebbleOsUpdate(watch: PebbleDevice): FirmwareUpdateCheckResult.FoundUpdate? {
+    val updateCheck = koinInject<DrewPebbleOsUpdateCheck>()
+    val watchInfo = (watch as? ConnectedWatchInfo)?.watchInfo
+    val checkingForUpdates = (watch as? ConnectedPebble.Firmware)?.firmwareUpdateAvailable?.checkingForUpdates == true
+    val result by produceState<FirmwareUpdateCheckResult?>(
+        initialValue = null,
+        watchInfo?.serial,
+        watchInfo?.runningFwVersion?.stringVersion,
+        checkingForUpdates,
+    ) {
+        value = watchInfo?.let { updateCheck.checkForUpdate(it, force = checkingForUpdates) }
+    }
+    return result as? FirmwareUpdateCheckResult.FoundUpdate
+}
+
+@Composable
+private fun FirmwareUpdateButton(
+    osName: String,
+    update: FirmwareUpdateCheckResult.FoundUpdate,
+    firmwareUpdater: ConnectedPebble.Firmware,
+    enabled: Boolean,
+    warning: String? = null,
+) {
+    var showNotesDialog by remember { mutableStateOf(false) }
+    var showWarningDialog by remember { mutableStateOf(false) }
+    val version = update.version.stringVersion
+    if (showNotesDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotesDialog = false },
+            title = { Text("Install $osName $version") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(update.notes)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNotesDialog = false
+                    if (warning != null) {
+                        showWarningDialog = true
+                    } else {
+                        firmwareUpdater.updateFirmware(update)
+                    }
+                }) { Text(if (warning != null) "Continue" else "Install") }
+            },
+            dismissButton = { TextButton(onClick = { showNotesDialog = false }) { Text("Cancel") } }
+        )
+    }
+    if (showWarningDialog && warning != null) {
+        AlertDialog(
+            onDismissRequest = { showWarningDialog = false },
+            title = { Text(warning) },
+            text = { Text("$osName $version is an official build without any DrewPebbleOS changes.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showWarningDialog = false
+                    firmwareUpdater.updateFirmware(update)
+                }) { Text("Install") }
+            },
+            dismissButton = { TextButton(onClick = { showWarningDialog = false }) { Text("Cancel") } }
+        )
+    }
+    PebbleElevatedButton(
+        text = "Update $osName to $version",
+        onClick = {
+            logger.d { "Starting $osName update from watches screen" }
+            showNotesDialog = true
+        },
+        enabled = enabled,
+        icon = Icons.Default.SystemUpdateAlt,
+        contentDescription = "Update $osName",
+        primaryColor = true,
+        modifier = Modifier.padding(vertical = 5.dp),
+    )
+}
+
+@Composable
 fun WatchDetails(
     watch: PebbleDevice,
     bluetoothState: BluetoothState,
@@ -2162,37 +2241,22 @@ fun WatchDetails(
     val loggedIn by pebbleAccount.loggedIn.collectAsState()
     val uriHandler = LocalUriHandler.current
 
-    if (firmwareUpdateAvailable is FirmwareUpdateCheckResult.FoundUpdate && firmwareUpdater != null && !firmwareUpdateInProgress) {
-        var showFirmwareUpdateConfirmDialog by remember { mutableStateOf(false) }
-        if (showFirmwareUpdateConfirmDialog) {
-            AlertDialog(
-                onDismissRequest = { showFirmwareUpdateConfirmDialog = false },
-                title = { Text("Install PebbleOS ${firmwareUpdateAvailable.version.stringVersion}") },
-                text = {
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
-                        Text(firmwareUpdateAvailable.notes)
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showFirmwareUpdateConfirmDialog = false
-                        firmwareUpdater.updateFirmware(firmwareUpdateAvailable)
-                    }) { Text("Install") }
-                },
-                dismissButton = { TextButton(onClick = { showFirmwareUpdateConfirmDialog = false }) { Text("Cancel") } }
-            )
-        }
-        PebbleElevatedButton(
-            text = "Update PebbleOS to ${firmwareUpdateAvailable.version.stringVersion}",
-            onClick = {
-                logger.d { "Starting firmware update from watches screen" }
-                showFirmwareUpdateConfirmDialog = true
-            },
+    val drewPebbleOsUpdate = drewPebbleOsUpdate(watch)
+    if (drewPebbleOsUpdate != null && firmwareUpdater != null && !firmwareUpdateInProgress) {
+        FirmwareUpdateButton(
+            osName = "DrewPebbleOS",
+            update = drewPebbleOsUpdate,
+            firmwareUpdater = firmwareUpdater,
             enabled = bluetoothState.enabled(),
-            icon = Icons.Default.SystemUpdateAlt,
-            contentDescription = "Update PebbleOS",
-            primaryColor = true,
-            modifier = Modifier.padding(vertical = 5.dp),
+        )
+    }
+    if (firmwareUpdateAvailable is FirmwareUpdateCheckResult.FoundUpdate && firmwareUpdater != null && !firmwareUpdateInProgress) {
+        FirmwareUpdateButton(
+            osName = "PebbleOS",
+            update = firmwareUpdateAvailable,
+            firmwareUpdater = firmwareUpdater,
+            enabled = bluetoothState.enabled(),
+            warning = "WARNING: This is not the DrewPebbleOS!",
         )
     } else if (firmwareUpdateAvailable is FirmwareUpdateCheckResult.UpdateCheckFailed) {
         Card(
