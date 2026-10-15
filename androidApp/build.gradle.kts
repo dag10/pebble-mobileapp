@@ -16,9 +16,10 @@ val properties = Properties().apply {
 val localReleaseBuild = properties["LOCAL_RELEASE_BUILD"]?.toString()?.toBooleanStrictOrNull() ?: false
 
 // Most recent tag reachable from HEAD, so a release branch versions from its own tag.
+// Personal -drew.N tags are skipped; they mark builds of a fork, not app versions.
 val gitVersionName = providers.exec {
     isIgnoreExitValue = true
-    commandLine("git", "describe", "--tags", "--abbrev=0", "HEAD")
+    commandLine("git", "describe", "--tags", "--abbrev=0", "--exclude", "*-drew.*", "HEAD")
 }.standardOutput.asText.map { it.trim().ifEmpty { "unknown" } }
 
 // Tag as an increasing int: 1.9.1.3 -> 10901003. Major must stay below 100, the rest below 1000.
