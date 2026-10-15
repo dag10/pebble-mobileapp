@@ -81,6 +81,7 @@ import io.rebble.libpebblecommon.connection.endpointmanager.AppFetchProvider
 import io.rebble.libpebblecommon.connection.endpointmanager.AppOrderManager
 import io.rebble.libpebblecommon.connection.endpointmanager.CompanionAppLifecycleManager
 import io.rebble.libpebblecommon.connection.endpointmanager.DebugPebbleProtocolSender
+import io.rebble.libpebblecommon.connection.endpointmanager.FindPhoneManager
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater
 import io.rebble.libpebblecommon.connection.endpointmanager.LanguagePackInstaller
 import io.rebble.libpebblecommon.connection.endpointmanager.InterruptedFirmwareUpdates
@@ -324,6 +325,7 @@ val CommonPhoneCapabilities = setOf(
 //    ProtocolCapsFlag.SupportsHealthInsights,
 //    ProtocolCapsFlag.SupportsUnreadCoreDump,
     ProtocolCapsFlag.SupportsWeatherApp,
+    ProtocolCapsFlag.SupportsFindPhone,
 //    ProtocolCapsFlag.SupportsRemindersApp,
 //    ProtocolCapsFlag.SupportsWorkoutApp,
 //    ProtocolCapsFlag.SupportsSmoothFwInstallProgress,
@@ -573,7 +575,7 @@ fun initKoin(
                             get(), get(), get(),
                             get(), get(), get(),
                             get(), get(), get(), get(), get(),
-                            get(),
+                            get(), get(),
                         )
                     } bind PebbleConnector::class
                     scopedOf(::PebbleProtocolRunner)
@@ -622,6 +624,7 @@ fun initKoin(
                     scopedOf(::CompanionAppLifecycleManager)
                     scopedOf(::BlobDB)
                     scopedOf(::PhoneControlManager)
+                    scopedOf(::FindPhoneManager)
                     scopedOf(::MusicControlManager)
                     scopedOf(::AppOrderManager)
                     scopedOf(::RealLanguagePackInstaller) bind LanguagePackInstaller::class

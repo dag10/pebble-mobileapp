@@ -13,6 +13,7 @@ import io.rebble.libpebblecommon.connection.endpointmanager.AppFetchProvider
 import io.rebble.libpebblecommon.connection.endpointmanager.AppOrderManager
 import io.rebble.libpebblecommon.connection.endpointmanager.CompanionAppLifecycleManager
 import io.rebble.libpebblecommon.connection.endpointmanager.DebugPebbleProtocolSender
+import io.rebble.libpebblecommon.connection.endpointmanager.FindPhoneManager
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater
 import io.rebble.libpebblecommon.connection.endpointmanager.RealLanguagePackInstaller
 import io.rebble.libpebblecommon.connection.endpointmanager.audio.VoiceSessionManager
@@ -153,6 +154,7 @@ class RealPebbleConnector(
     private val logDumpService: LogDumpService,
     private val getBytesService: GetBytesService,
     private val phoneControlManager: PhoneControlManager,
+    private val findPhoneManager: FindPhoneManager,
     private val musicService: MusicService,
     private val musicControlManager: MusicControlManager,
     private val imagingService: ImagingService,
@@ -285,6 +287,7 @@ class RealPebbleConnector(
         appMessageService.init()
         companionAppLifecycleManager.init(identifier, watchInfo)
         phoneControlManager.init()
+        findPhoneManager.init()
         musicControlManager.init()
         notificationImageProvider.register(imagingService)
         imagingService.init()

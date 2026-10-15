@@ -382,6 +382,7 @@ enum class ProtocolCapsFlag(val value: Int) {
     SupportsNotificationWindowState(26),
     SupportsAppPermissions(27),
     SupportsMultipleLanguagePacks(28),
+    SupportsFindPhone(29),
     ;
 
     companion object {
@@ -458,7 +459,9 @@ open class SystemMessage(message: Message) : SystemPacket(endpoint) {
         LanguagePackRemoveRequest(0x0fu),
         LanguagePackRemoveResponse(0x10u),
         LanguageSelectRequest(0x11u),
-        LanguageSelectResponse(0x13u)
+        LanguageSelectResponse(0x13u),
+        FindPhone(0x14u),
+        FindPhoneStop(0x15u),
     }
 
     val command = SUByte(m, 0x0u)
@@ -551,6 +554,9 @@ open class SystemMessage(message: Message) : SystemPacket(endpoint) {
         val slot = SUByte(m)
         val success = SUByte(m)
     }
+
+    class FindPhone : SystemMessage(Message.FindPhone)
+    class FindPhoneStop : SystemMessage(Message.FindPhoneStop)
 
     enum class FirmwareUpdateStartStatus(val value: UByte) {
         Stopped(0x00u),
@@ -668,6 +674,13 @@ fun systemPacketsRegister() {
 
     PacketRegistry.register(SystemMessage.endpoint, SystemMessage.Message.LanguageSelectResponse.value) {
         SystemMessage.LanguageSelectResponse()
+    }
+
+    PacketRegistry.register(SystemMessage.endpoint, SystemMessage.Message.FindPhone.value) {
+        SystemMessage.FindPhone()
+    }
+    PacketRegistry.register(SystemMessage.endpoint, SystemMessage.Message.FindPhoneStop.value) {
+        SystemMessage.FindPhoneStop()
     }
 
     PacketRegistry.register(

@@ -113,6 +113,35 @@ internal class SystemMessageTest {
     }
 
     @Test
+    fun findPhoneCapabilityUsesBit29() {
+        val flags = ProtocolCapsFlag.makeFlags(listOf(ProtocolCapsFlag.SupportsFindPhone))
+        assertEquals(0x20u.toUByte(), flags[3])
+        assertEquals(setOf(ProtocolCapsFlag.SupportsFindPhone), ProtocolCapsFlag.fromFlags(flags))
+    }
+
+    @Test
+    fun deserializeFindPhone() {
+        val bytes = ubyteArrayOf(
+            0x00u, 0x02u, // length
+            0x00u, 0x12u, // endpoint: system message
+            0x00u, 0x14u, // command, type: FindPhone
+        )
+
+        assertIs<SystemMessage.FindPhone>(PebblePacket.deserialize(bytes))
+    }
+
+    @Test
+    fun deserializeFindPhoneStop() {
+        val bytes = ubyteArrayOf(
+            0x00u, 0x02u, // length
+            0x00u, 0x12u, // endpoint: system message
+            0x00u, 0x15u, // command, type: FindPhoneStop
+        )
+
+        assertIs<SystemMessage.FindPhoneStop>(PebblePacket.deserialize(bytes))
+    }
+
+    @Test
     fun serializeDeserializeSetTimeUtcMessage() {
         val originalMessage = TimeMessage.SetUTC(
             12345678u,
