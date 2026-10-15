@@ -136,6 +136,7 @@ import coredevices.ui.ConfirmDialog
 import coredevices.ui.CoreLinearProgressIndicator
 import coredevices.ui.M3Dialog
 import coredevices.ui.SignInDialog
+import coredevices.util.CommonBuildKonfig
 import coredevices.util.CoreConfig
 import coredevices.util.CoreConfigHolder
 import coredevices.util.Permission
@@ -578,7 +579,7 @@ fun rememberSettingsItemsState(navBarNav: NavBarNav?, snackbarDisplay: SnackbarD
                     item = {
                         ListItem(
                             headlineContent = {
-                                Text("App Version: ${appVersion.version}")
+                                Text("App Version: ${CommonBuildKonfig.GIT_HASH.takeIf { "-drew." in it } ?: appVersion.version}")
                             },
                             shadowElevation = ELEVATION,
                         )
