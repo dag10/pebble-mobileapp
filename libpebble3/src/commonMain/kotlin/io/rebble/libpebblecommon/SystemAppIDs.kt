@@ -40,4 +40,10 @@ object SystemAppIDs {
         TIMELINE_FUTURE_UUID to "Timeline Future",
         CLEAR_NOTIFICATIONS_UUID to "Clear Notifications",
     )
+
+    val QUICK_LAUNCH_NOTHING_UUID = Uuid.parse("de6da17f-1a10-4725-adbb-1efc22e43f04")
+    val QUICK_LAUNCH_WATCHFACE_UUID = Uuid.parse("5ba462cf-26a3-41ec-bf03-9cce5c720012")
+    val MUSIC_PLAY_PAUSE_UUID = Uuid.parse("373a5bfa-8da7-4e96-8f8e-8f938dc860c1")
+    val MUSIC_NEXT_TRACK_UUID = Uuid.parse("c4be4e17-2f5d-48ee-82fa-7f92820cf3b7")
+    val MUSIC_PREVIOUS_TRACK_UUID = Uuid.parse("ffe37100-8db6-4186-8ecb-9a90bbfddf05")
 }

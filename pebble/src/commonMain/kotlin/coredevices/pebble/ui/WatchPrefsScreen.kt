@@ -28,7 +28,20 @@ import coredevices.ui.ConfirmDialog
 import coredevices.util.CoreConfigHolder
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import io.rebble.libpebblecommon.SystemAppIDs.SYSTEM_SHORTCUTS
+import io.rebble.libpebblecommon.SystemAppIDs.AIRPLANE_MODE_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.BACKLIGHT_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.CLEAR_NOTIFICATIONS_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.MOTION_BACKLIGHT_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.MUSIC_NEXT_TRACK_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.MUSIC_PLAY_PAUSE_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.MUSIC_PREVIOUS_TRACK_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.QUICK_LAUNCH_NOTHING_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.QUICK_LAUNCH_WATCHFACE_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.QUIET_TIME_TOGGLE_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.TIMELINE_FUTURE_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.TIMELINE_MENU_ENTRY_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.TIMELINE_PAST_UUID
+import io.rebble.libpebblecommon.SystemAppIDs.TOUCH_TOGGLE_UUID
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.database.dao.WatchPreference
 import io.rebble.libpebblecommon.database.entity.BacklightPresetMode
@@ -44,6 +57,7 @@ import io.rebble.libpebblecommon.database.entity.ScheduleWatchPref
 import io.rebble.libpebblecommon.database.entity.WatchPref
 import io.rebble.libpebblecommon.database.entity.WatchPrefEnum
 import io.rebble.libpebblecommon.locker.AppType
+import io.rebble.libpebblecommon.metadata.WatchType
 import io.rebble.libpebblecommon.timeline.TimelineColor
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
@@ -177,14 +191,7 @@ fun WatchPref<*>.section(): Section = when (this) {
     RgbColorWatchPref.BacklightColor -> Section.Display
     NumberWatchPref.BacklightTimeoutMs -> Section.Display
     NumberWatchPref.AmbientLightThreshold -> Section.Display
-    QuicklaunchWatchPref.QlUp -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlDown -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlComboBackUp -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlComboUpDown -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlSelect -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlBack -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlSingleClickUp -> Section.QuickLaunch
-    QuicklaunchWatchPref.QlSingleClickDown -> Section.QuickLaunch
+    is QuicklaunchWatchPref -> Section.QuickLaunch
     BoolWatchPref.TimelineQuickViewEnabled -> Section.Timeline
     NumberWatchPref.TimelineQuickViewMinsBefore -> Section.Timeline
     EnumWatchPref.TimelineQuickViewUnsupportedFaces -> Section.Timeline
@@ -616,18 +623,69 @@ private fun quickLaunchOptions(libPebble: LibPebble): List<QuickLaunchOption> {
     ).map { apps ->
         apps.filter { app -> app.isSynced() }
     }.collectAsState(emptyList())
-    return remember(installedApps) {
-        listOf(QuickLaunchOption(null, "None")) +
-                SYSTEM_SHORTCUTS.map { (uuid, name) -> QuickLaunchOption(uuid, name) } +
+    // Toggle Touch only exists on watches with a touchscreen.
+    val hasTouch = lastConnectedWatch()?.watchType?.watchType.let {
+        it == WatchType.EMERY || it == WatchType.GABBRO
+    }
+    return remember(installedApps, hasTouch) {
+        // The watch's Quick Launch actions, then its apps.
+        listOf(QuickLaunchOption(null, "Unassigned")) +
+                QuickLaunchOption(QUIET_TIME_TOGGLE_UUID, "Toggle Quiet Time") +
+                QuickLaunchOption(BACKLIGHT_UUID, "Toggle Backlight") +
+                QuickLaunchOption(MOTION_BACKLIGHT_UUID, "Toggle Motion Backlight") +
+                QuickLaunchOption(AIRPLANE_MODE_UUID, "Toggle Airplane Mode") +
+                listOfNotNull(
+                    QuickLaunchOption(TOUCH_TOGGLE_UUID, "Toggle Touch").takeIf { hasTouch }
+                ) +
+                QuickLaunchOption(TIMELINE_PAST_UUID, "Timeline Past") +
+                QuickLaunchOption(TIMELINE_FUTURE_UUID, "Timeline Future") +
+                QuickLaunchOption(MUSIC_PLAY_PAUSE_UUID, "Play/Pause") +
+                QuickLaunchOption(MUSIC_NEXT_TRACK_UUID, "Next Track") +
+                QuickLaunchOption(MUSIC_PREVIOUS_TRACK_UUID, "Previous Track") +
+                QuickLaunchOption(CLEAR_NOTIFICATIONS_UUID, "Clear Notification History") +
+                QuickLaunchOption(QUICK_LAUNCH_WATCHFACE_UUID, "Send to watchface") +
+                QuickLaunchOption(QUICK_LAUNCH_NOTHING_UUID, "Nothing") +
                 installedApps.map { app ->
                     QuickLaunchOption(app.properties.id, app.properties.title)
                 }
     }
 }
 
-private fun quicklaunchPref(item: WatchPreference<QuickLaunchSetting>, libPebble: LibPebble, options: List<QuickLaunchOption>): SettingsItem {
+private val QUICK_LAUNCH_COMBOS = setOf(
+    QuicklaunchWatchPref.QlTapBackUp,
+    QuicklaunchWatchPref.QlTapBackDown,
+    QuicklaunchWatchPref.QlTapBackSelect,
+    QuicklaunchWatchPref.QlDoubleTapBackUp,
+    QuicklaunchWatchPref.QlDoubleTapBackDown,
+    QuicklaunchWatchPref.QlDoubleTapBackSelect,
+    QuicklaunchWatchPref.QlTripleTapBackUp,
+    QuicklaunchWatchPref.QlTripleTapBackDown,
+    QuicklaunchWatchPref.QlTripleTapBackSelect,
+    QuicklaunchWatchPref.QlComboBackUp,
+    QuicklaunchWatchPref.QlComboUpDown,
+)
+
+/** The targets the watch offers for [pref], as its Quick Launch settings filter them. */
+internal fun List<QuickLaunchOption>.forQuickLaunchPref(pref: QuicklaunchWatchPref): List<QuickLaunchOption> =
+    filter { option ->
+        val uuid = option.uuid ?: return@filter true
+        when {
+            // Unassigned, Tap Back dismisses the timeline peek; the only other choice is the watchface.
+            pref == QuicklaunchWatchPref.QlSingleClickBack -> uuid == QUICK_LAUNCH_WATCHFACE_UUID
+            // A combo has no single button to send on to the watchface.
+            pref in QUICK_LAUNCH_COMBOS -> uuid != QUICK_LAUNCH_WATCHFACE_UUID
+            pref == QuicklaunchWatchPref.QlSingleClickUp ->
+                uuid != TIMELINE_FUTURE_UUID && uuid != TIMELINE_MENU_ENTRY_UUID
+            pref == QuicklaunchWatchPref.QlSingleClickDown ->
+                uuid != TIMELINE_PAST_UUID && uuid != TIMELINE_MENU_ENTRY_UUID
+            else -> true
+        }
+    }
+
+private fun quicklaunchPref(item: WatchPreference<QuickLaunchSetting>, libPebble: LibPebble, allOptions: List<QuickLaunchOption>): SettingsItem {
+    val options = allOptions.forQuickLaunchPref(item.pref as QuicklaunchWatchPref)
     val default = item.valueOrDefault()
-    val defaultQl = options.firstOrNull { it.uuid == default.uuid } ?: options[0]
+    val defaultQl = options.firstOrNull { default.enabled && it.uuid == default.uuid } ?: options[0]
     return basicSettingsDropdownItem(
         id = item.pref.id,
         title = item.pref.displayName,
