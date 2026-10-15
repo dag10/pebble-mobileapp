@@ -14,6 +14,7 @@ import coredevices.pebble.actions.watch.sendSimpleNotification
 import coredevices.pebble.actions.watch.setBacklightMotion
 import coredevices.pebble.actions.watch.setNotificationBacklight
 import coredevices.pebble.actions.watch.setNotificationFilter
+import coredevices.pebble.actions.watch.setIosFocusActive
 import coredevices.pebble.actions.watch.setQuietTimeEnabled
 import coredevices.pebble.actions.watch.setQuietTimeInterruptions
 import coredevices.pebble.actions.watch.setQuietTimeShowNotifications
@@ -80,6 +81,10 @@ class IosPebbleQuietTimeActions(
 
     override fun setQuietTimeInterruptions(alertMaskName: String) {
         setQuietTimeInterruptions(libPebble, alertMaskName)
+    }
+
+    override fun setIosFocusActive(active: Boolean) {
+        setIosFocusActive(libPebble, active)
     }
 }
 
