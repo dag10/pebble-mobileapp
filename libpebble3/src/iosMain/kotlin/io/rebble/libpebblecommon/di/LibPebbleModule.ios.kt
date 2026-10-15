@@ -17,6 +17,8 @@ import io.rebble.libpebblecommon.connection.endpointmanager.timeline.IosNotifica
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.IosNotificationListenerConnection
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.PlatformNotificationActionHandler
 import io.rebble.libpebblecommon.contacts.SystemContacts
+import io.rebble.libpebblecommon.findphone.IosPhoneRinger
+import io.rebble.libpebblecommon.findphone.PhoneRinger
 import io.rebble.libpebblecommon.io.rebble.libpebblecommon.calls.IosLegacyPhoneReceiver
 import io.rebble.libpebblecommon.io.rebble.libpebblecommon.calls.IosSystemCallLog
 import io.rebble.libpebblecommon.io.rebble.libpebblecommon.contacts.IosSystemContacts
@@ -60,6 +62,7 @@ actual val platformModule: Module = module {
     singleOf(::IosCalendarActionHandler) bind PlatformCalendarActionHandler::class
     singleOf(::IosSystemCallLog) bind SystemCallLog::class
     singleOf(::IosSystemMusicControl) bind SystemMusicControl::class
+    singleOf(::IosPhoneRinger) bind PhoneRinger::class
     singleOf(::NoNotificationImages) bind NotificationImageProvider::class
     singleOf(::IosSystemGeolocation) bind SystemGeolocation::class
     singleOf(::OtherPebbleIosApps) bind OtherPebbleApps::class

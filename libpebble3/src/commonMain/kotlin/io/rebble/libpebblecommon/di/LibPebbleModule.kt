@@ -111,6 +111,7 @@ import io.rebble.libpebblecommon.database.entity.TimelineNotificationDao
 import io.rebble.libpebblecommon.database.getRoomDatabase
 import io.rebble.libpebblecommon.datalogging.Datalogging
 import io.rebble.libpebblecommon.datalogging.HealthDataProcessor
+import io.rebble.libpebblecommon.findphone.FindPhoneManager
 import io.rebble.libpebblecommon.health.Health
 import io.rebble.libpebblecommon.js.HttpInterceptorManager
 import io.rebble.libpebblecommon.js.InjectedPKJSHttpInterceptors
@@ -311,6 +312,7 @@ val CommonPhoneCapabilities = setOf(
     ProtocolCapsFlag.SupportsAppDictation,
     ProtocolCapsFlag.Supports8kAppMessage,
     ProtocolCapsFlag.SupportsSettingsSync,
+    ProtocolCapsFlag.SupportsDrewFindPhone,
 //    ProtocolCapsFlag.SupportsHealthInsights,
 //    ProtocolCapsFlag.SupportsUnreadCoreDump,
     ProtocolCapsFlag.SupportsWeatherApp,
@@ -543,7 +545,7 @@ fun initKoin(
                             get(), get(), get(),
                             get(), get(), get(),
                             get(), get(), get(), get(), get(),
-                            get(),
+                            get(), get(),
                         )
                     } bind PebbleConnector::class
                     scopedOf(::PebbleProtocolRunner)
@@ -592,6 +594,7 @@ fun initKoin(
                     scopedOf(::CompanionAppLifecycleManager)
                     scopedOf(::BlobDB)
                     scopedOf(::PhoneControlManager)
+                    scopedOf(::FindPhoneManager)
                     scopedOf(::MusicControlManager)
                     scopedOf(::AppOrderManager)
                     scopedOf(::RealLanguagePackInstaller) bind LanguagePackInstaller::class

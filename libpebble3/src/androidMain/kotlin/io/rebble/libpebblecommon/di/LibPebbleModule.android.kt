@@ -18,6 +18,8 @@ import io.rebble.libpebblecommon.connection.bt.classic.pebble.BtClassicConnector
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.AndroidNotificationActionHandler
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.PlatformNotificationActionHandler
 import io.rebble.libpebblecommon.contacts.SystemContacts
+import io.rebble.libpebblecommon.findphone.AndroidPhoneRinger
+import io.rebble.libpebblecommon.findphone.PhoneRinger
 import io.rebble.libpebblecommon.io.rebble.libpebblecommon.calls.AndroidPhoneReceiver
 import io.rebble.libpebblecommon.io.rebble.libpebblecommon.calls.AndroidSystemCallLog
 import io.rebble.libpebblecommon.connection.bt.classic.transport.AndroidClassicScanner
@@ -76,6 +78,7 @@ actual val platformModule: Module = module {
     singleOf(::AndroidCalendarActionHandler) bind PlatformCalendarActionHandler::class
     singleOf(::AndroidSystemCallLog) bind SystemCallLog::class
     singleOf(::AndroidSystemMusicControl) bind SystemMusicControl::class
+    singleOf(::AndroidPhoneRinger) bind PhoneRinger::class
     singleOf(::AndroidSystemGeolocation) bind SystemGeolocation::class
     singleOf(::AndroidPackageChangedReceiver)
     singleOf(::OtherPebbleAndroidApps) bind OtherPebbleApps::class
