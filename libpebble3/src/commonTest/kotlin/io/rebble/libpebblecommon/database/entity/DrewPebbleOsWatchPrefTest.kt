@@ -34,16 +34,14 @@ private fun item(pref: WatchPref<*>) = WatchPrefItem(
 
 class DrewPebbleOsWatchPrefTest {
     @Test
-    fun focusPrefsAreSentToDrewPebbleOs() {
+    fun focusStateIsSentToDrewPebbleOs() {
         val params = params("v4.41.1-drew.2")
-        assertContentEquals(ubyteArrayOf(1u), item(BoolWatchPref.QuietTimeIosFocus).value(params))
         assertContentEquals(ubyteArrayOf(1u), item(BoolWatchPref.IosFocusActive).value(params))
     }
 
     @Test
-    fun focusPrefsAreNotSentToOtherFirmware() {
+    fun focusStateIsNotSentToOtherFirmware() {
         val params = params("v4.41.1")
-        assertNull(item(BoolWatchPref.QuietTimeIosFocus).value(params))
         assertNull(item(BoolWatchPref.IosFocusActive).value(params))
         assertContentEquals(ubyteArrayOf(1u), item(BoolWatchPref.CalendarAwareQuietTime).value(params))
     }

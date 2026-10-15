@@ -106,9 +106,17 @@ private val SCHEDULE_HOURS = mapOf<WatchPref<*>, WatchPref<*>>(
     BoolWatchPref.QuietTimeWeekendScheduleEnabled to ScheduleWatchPref.QuietTimeWeekendSchedule,
 )
 
-/** Hides phone-owned state, and the iOS Focus setting on other platforms. */
-internal fun List<WatchPreference<*>>.hideUnavailablePrefs(isIOS: Boolean): List<WatchPreference<*>> =
-    filterNot { it.pref.isInternal || (it.pref == BoolWatchPref.QuietTimeIosFocus && !isIOS) }
+internal fun List<WatchPreference<*>>.hideInternalPrefs(): List<WatchPreference<*>> =
+    filterNot { it.pref.isInternal }
+
+/** Explains the Pebble Quiet Time Focus Filter, which is set up in iPhone Settings. */
+private fun iosFocusQuietTimeInfo() = basicSettingsActionItem(
+    title = "Quiet Time - iOS Focus",
+    topLevelType = TopLevelType.Watch,
+    section = Section.QuietTime,
+    description = "Quiet Time turns on automatically with any Focus that has the Pebble Quiet Time filter. Add it in iPhone Settings > Focus > (a Focus) > Focus Filters. Requires DrewPebbleOS.",
+    keywords = "focus do not disturb sleep",
+)
 
 /** Schedule hours sit directly under the toggle they belong to, and only while it is on. */
 internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchPreference<*>> {
@@ -125,11 +133,11 @@ fun watchPrefs(): List<SettingsItem> {
     val coreConfigHolder = koinInject<CoreConfigHolder>()
     val platform = koinInject<Platform>()
     val allSettings by libPebble.watchPrefs.collectAsState(emptyList())
-    val settings = remember(allSettings, platform) { allSettings.hideUnavailablePrefs(platform.isIOS) }
+    val settings = remember(allSettings) { allSettings.hideInternalPrefs() }
     val coreConfig by coreConfigHolder.config.collectAsState()
     val weatherFetcher = koinInject<WeatherFetcher>()
     val quickLaunchOptions = quickLaunchOptions(libPebble)
-    val mapped = remember(settings, quickLaunchOptions, coreConfig) {
+    val mapped = remember(settings, quickLaunchOptions, coreConfig, platform) {
         settings.inLayoutOrder()
             .hidePresetManagedBacklightPrefs()
             .groupQuietTimeScheduleHours()
@@ -147,6 +155,9 @@ fun watchPrefs(): List<SettingsItem> {
                 // Automatic sun times are a phone setting, shown with the night colour they serve.
                 if (item.pref == RgbColorWatchPref.BacklightColorNight) {
                     listOf(setting, autoSunTimesItem(coreConfigHolder, weatherFetcher))
+                } else if (platform.isIOS && item.pref == BoolWatchPref.CalendarAwareQuietTime) {
+                    // Sits after Calendar Aware, as on the watch
+                    listOf(setting, iosFocusQuietTimeInfo())
                 } else {
                     listOf(setting)
                 }
@@ -255,7 +266,6 @@ internal val WATCH_PREF_LAYOUT: List<PrefLayout> = listOf(
 
     PrefLayout(BoolWatchPref.QuietTimeManuallyEnabled, Section.QuietTime),
     PrefLayout(BoolWatchPref.CalendarAwareQuietTime, Section.QuietTime),
-    PrefLayout(BoolWatchPref.QuietTimeIosFocus, Section.QuietTime),
     // Phone-owned state, hidden from the screen.
     PrefLayout(BoolWatchPref.IosFocusActive, Section.QuietTime),
     PrefLayout(BoolWatchPref.QuietTimeWeekdayScheduleEnabled, Section.QuietTime),
