@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coredevices.pebble.rememberLibPebble
 import coredevices.ui.ConfirmDialog
+import coredevices.util.Platform
+import coredevices.util.isIOS
 import io.rebble.libpebblecommon.SystemAppIDs.AIRPLANE_MODE_UUID
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -58,6 +60,7 @@ import io.rebble.libpebblecommon.metadata.WatchType
 import io.rebble.libpebblecommon.timeline.TimelineColor
 import kotlinx.coroutines.flow.map
 import kotlin.uuid.Uuid
+import org.koin.compose.koinInject
 
 // Snap the notification timeout slider to 15-second increments (40 stops across 15..600s)
 // so the displayed MM:SS value is always a clean quarter minute.
@@ -85,6 +88,10 @@ private val SCHEDULE_HOURS = mapOf<WatchPref<*>, WatchPref<*>>(
     BoolWatchPref.QuietTimeWeekendScheduleEnabled to ScheduleWatchPref.QuietTimeWeekendSchedule,
 )
 
+/** Hides phone-owned state, and the iOS Focus setting on other platforms. */
+internal fun List<WatchPreference<*>>.hideUnavailablePrefs(isIOS: Boolean): List<WatchPreference<*>> =
+    filterNot { it.pref.isInternal || (it.pref == BoolWatchPref.QuietTimeIosFocus && !isIOS) }
+
 /** Schedule hours sit directly under the toggle they belong to, and only while it is on. */
 internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchPreference<*>> {
     val hours = filter { it.pref is ScheduleWatchPref }
@@ -97,7 +104,9 @@ internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchP
 @Composable
 fun watchPrefs(): List<SettingsItem> {
     val libPebble = rememberLibPebble()
-    val settings by libPebble.watchPrefs.collectAsState(emptyList())
+    val platform = koinInject<Platform>()
+    val allSettings by libPebble.watchPrefs.collectAsState(emptyList())
+    val settings = remember(allSettings, platform) { allSettings.hideUnavailablePrefs(platform.isIOS) }
     val quickLaunchOptions = quickLaunchOptions(libPebble)
     val mapped = remember(settings, quickLaunchOptions) {
         settings.hidePresetManagedBacklightPrefs().groupQuietTimeScheduleHours().map { item ->
@@ -175,6 +184,8 @@ fun WatchPref<*>.section(): Section = when (this) {
     BoolWatchPref.CalendarAwareQuietTime -> Section.QuietTime
     BoolWatchPref.QuietTimeWeekdayScheduleEnabled -> Section.QuietTime
     BoolWatchPref.QuietTimeWeekendScheduleEnabled -> Section.QuietTime
+    BoolWatchPref.QuietTimeIosFocus -> Section.QuietTime
+    BoolWatchPref.IosFocusActive -> Section.QuietTime
     ScheduleWatchPref.QuietTimeWeekdaySchedule -> Section.QuietTime
     ScheduleWatchPref.QuietTimeWeekendSchedule -> Section.QuietTime
     BoolWatchPref.AlternativeNotificationStyle -> Section.Notifications

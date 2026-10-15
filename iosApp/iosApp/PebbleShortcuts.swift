@@ -408,6 +408,34 @@ struct SetQuietTimeIntent: AppIntent {
     }
 }
 
+// Added to a Focus in iPhone Settings > Focus > Focus Filters. iOS runs perform() when that Focus
+// turns on, and again with the default values when it turns off, so the default must be false.
+@available(iOS 16.0, *)
+struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
+    static var title: LocalizedStringResource = "Pebble Quiet Time"
+    static var description = IntentDescription("Turn on Quiet Time on your watch while this Focus is on. Needs DrewPebbleOS, with Quiet Time > iOS Focus enabled.")
+
+    @Parameter(title: "Quiet Time", default: false)
+    var quietTime: Bool
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: quietTime ? "Quiet Time On" : "Quiet Time Off")
+    }
+
+    func perform() async throws -> some IntentResult {
+        IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: quietTime)
+        return .result()
+    }
+
+    /// Catches up on a Focus change iOS couldn't deliver while the app wasn't running.
+    static func syncCurrent() {
+        Task {
+            guard let current = try? await PebbleQuietTimeFocusFilter.current else { return }
+            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: current.quietTime)
+        }
+    }
+}
+
 @available(iOS 16.0, *)
 struct SetQuietTimeShowNotificationsIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Quiet Time Show Notifications"

@@ -257,6 +257,14 @@ private val FIRMWARE_UPDATE_STATUS_TIMEOUT = 15.seconds
 
 private val FIRMWARE_VERSION_REGEX = Regex("v?([0-9]+)\\.([0-9]+)(?:\\.([0-9]+))?(?:-(.*))?")
 
+private val DREW_BUILD_REGEX = Regex("-drew\\.([0-9]+)")
+
+/** The N in a `vX.Y.Z-drew.N` version, or null for a build that isn't DrewPebbleOS. */
+fun drewBuildNumber(version: String): Int? =
+    DREW_BUILD_REGEX.find(version)?.groupValues?.get(1)?.toIntOrNull()
+
+fun FirmwareVersion.isDrewPebbleOs(): Boolean = drewBuildNumber(stringVersion) != null
+
 data class FirmwareVersion(
     val stringVersion: String,
     val timestamp: Instant,
