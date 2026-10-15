@@ -47,6 +47,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         if let qemuAddress = UserDefaults.standard.string(forKey: "qemu") {
             IOSDelegate.shared.addQemuWatch(address: qemuAddress)
         }
+        if #available(iOS 16.0, *) {
+            PebbleQuietTimeFocusFilter.syncCurrent()
+        }
         return res
     }
     
@@ -112,6 +115,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 class SceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject {
     func sceneDidBecomeActive(_ scene: UIScene) {
         IOSDelegate.shared.sceneDidBecomeActive()
+        if #available(iOS 16.0, *) {
+            PebbleQuietTimeFocusFilter.syncCurrent()
+        }
     }
 
     func sceneWillResignActive(_ scene: UIScene) {

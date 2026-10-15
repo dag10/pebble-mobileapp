@@ -138,12 +138,12 @@ class WatchSettingsPlugin(
     }
 
     private suspend fun settings() =
-        watchPrefs.watchPrefs.first().filterNot { it.pref.isDebugSetting }
+        watchPrefs.watchPrefs.first().filterNot { it.pref.isDebugSetting || it.pref.isInternal }
 
     private fun toEnvelope(prefs: List<WatchPreference<*>>, kind: SettingKind) = SourceEnvelope(
         pluginUuid = pluginUuid.toString(),
         instances = prefs
-            .filterNot { it.pref.isDebugSetting }
+            .filterNot { it.pref.isDebugSetting || it.pref.isInternal }
             .filter { it.pref.kind() == kind }
             .map { preference ->
                 SourceInstance(

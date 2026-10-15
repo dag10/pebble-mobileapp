@@ -2,6 +2,7 @@ package coredevices.pebble.firmware
 
 import io.rebble.libpebblecommon.connection.FirmwareUpdateCheckResult
 import io.rebble.libpebblecommon.services.FirmwareVersion
+import io.rebble.libpebblecommon.services.drewBuildNumber
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
