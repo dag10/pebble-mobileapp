@@ -123,6 +123,15 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     /**
+     * Called from the Pebble Quiet Time Focus Filter when a Focus that has it turns on or off.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("setIosFocusActiveWithActive")
+    fun setIosFocusActive(active: Boolean) {
+        quietTimeActions.setIosFocusActive(active)
+    }
+
+    /**
      * Called from the iOS Shortcut to set Quiet Time show notifications: true = Show, false = Hide.
      */
     @OptIn(ExperimentalObjCName::class)

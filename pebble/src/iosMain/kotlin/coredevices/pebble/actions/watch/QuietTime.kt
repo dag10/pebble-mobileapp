@@ -6,10 +6,24 @@ import io.rebble.libpebblecommon.database.entity.AlertMask
 import io.rebble.libpebblecommon.database.entity.BoolWatchPref
 import io.rebble.libpebblecommon.database.entity.EnumWatchPref
 import io.rebble.libpebblecommon.database.entity.QuietTimeShowNotificationsMode
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** Enables or disables Quiet Time (Do Not Disturb) on the watch. */
 fun setQuietTimeEnabled(libPebble: LibPebble, enabled: Boolean) {
     libPebble.setWatchPref(WatchPreference(BoolWatchPref.QuietTimeManuallyEnabled, enabled))
+}
+
+/** Tells the watch whether an iOS Focus with the Pebble Quiet Time filter is on. */
+fun setIosFocusActive(libPebble: LibPebble, active: Boolean) {
+    GlobalScope.launch {
+        val current = libPebble.watchPrefs.first()
+            .firstOrNull { it.pref == BoolWatchPref.IosFocusActive }?.valueOrDefault()
+        if (current != active) {
+            libPebble.setWatchPref(WatchPreference(BoolWatchPref.IosFocusActive, active))
+        }
+    }
 }
 
 /**

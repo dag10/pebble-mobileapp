@@ -19,6 +19,7 @@ import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.packets.blobdb.TimelineAttribute
 import io.rebble.libpebblecommon.packets.blobdb.TimelineItem.Attribute
 import io.rebble.libpebblecommon.services.blobdb.DbWrite
+import io.rebble.libpebblecommon.services.isDrewPebbleOs
 import io.rebble.libpebblecommon.structmapper.SBoolean
 import io.rebble.libpebblecommon.structmapper.SFixedList
 import io.rebble.libpebblecommon.structmapper.SFixedString
@@ -73,6 +74,10 @@ data class WatchPrefItem(
         val type = WatchPref.from(id)
         if (type == null) {
             logger.w { "Don't know how to encode watch pref key: $id" }
+            return null
+        }
+        if (type.drewPebbleOsOnly && !params.firmwareVersion.isDrewPebbleOs()) {
+            logger.v { "Not sending DrewPebbleOS-only watch pref $id to other firmware" }
             return null
         }
         logger.v { "trying to insert watch pref to watch blobdb: $id / $value" }
@@ -241,6 +246,10 @@ sealed interface WatchPref<T> {
     fun encodeValue(value: T): String
     fun castParent(parent: WatchPreference<*>): WatchPreference<T> = parent as WatchPreference<T>
     val isDebugSetting: Boolean
+    /** Only DrewPebbleOS accepts this pref; other firmware is never sent it. */
+    val drewPebbleOsOnly: Boolean get() = false
+    /** Phone-owned state synced to the watch, never shown as a setting. */
+    val isInternal: Boolean get() = false
 
     companion object {
         fun enumeratePrefs(): List<WatchPref<*>> = BoolWatchPref.entries
@@ -261,6 +270,8 @@ enum class BoolWatchPref(
     override val defaultValue: Boolean,
     override val isDebugSetting: Boolean = false,
     override val description: String? = null,
+    override val drewPebbleOsOnly: Boolean = false,
+    override val isInternal: Boolean = false,
 ) : WatchPref<Boolean> {
     TimezoneSourceIsManual("timezoneSource", "Timezone configured manually", false, description = "Manually configure a time zone on the watch (instead of automatcially using the time zone of the phone)"),
     Clock24h("clock24h", "24h clock", false),
@@ -275,6 +286,8 @@ enum class BoolWatchPref(
     CalendarAwareQuietTime("dndSmartEnabled", "Quiet Time - Calendar Aware", false, description = "Automatically enable Quiet Time during calendar events"),
     QuietTimeWeekdayScheduleEnabled("dndWeekdayScheduleEnabled", "Quiet Time - Weekday Schedule", false, description = "Automatically enable Quiet Time during the scheduled hours, Monday to Friday"),
     QuietTimeWeekendScheduleEnabled("dndWeekendScheduleEnabled", "Quiet Time - Weekend Schedule", false, description = "Automatically enable Quiet Time during the scheduled hours, Saturday and Sunday"),
+    QuietTimeIosFocus("drewDndFocusEnabled", "Quiet Time - iOS Focus", false, description = "Automatically enable Quiet Time while your iPhone is in a Focus that has the Pebble Quiet Time filter (add it in iPhone Settings > Focus > a Focus > Focus Filters). Requires DrewPebbleOS.", drewPebbleOsOnly = true),
+    IosFocusActive("drewDndFocusActive", "iOS Focus Active", false, drewPebbleOsOnly = true, isInternal = true),
     AlternativeNotificationStyle("notifDesignStyle", "Alternative notification banner Style (B/W watches)", false),
     NotificationVibeDelay("notifVibeDelay", "Delay Notification Vibration", true, description = "Delay notification vibration until the notification is visible (after animations)"),
     NotificationBacklight("notifBacklight", "Notifications - Backlight", true, description = "Turn on the backlight when a notification arrives"),

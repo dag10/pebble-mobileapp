@@ -25,6 +25,8 @@ import coredevices.pebble.rememberLibPebble
 import coredevices.pebble.weather.WeatherFetcher
 import coredevices.ui.ConfirmDialog
 import coredevices.util.CoreConfigHolder
+import coredevices.util.Platform
+import coredevices.util.isIOS
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import io.rebble.libpebblecommon.SystemAppIDs.AIRPLANE_MODE_UUID
@@ -104,6 +106,10 @@ private val SCHEDULE_HOURS = mapOf<WatchPref<*>, WatchPref<*>>(
     BoolWatchPref.QuietTimeWeekendScheduleEnabled to ScheduleWatchPref.QuietTimeWeekendSchedule,
 )
 
+/** Hides phone-owned state, and the iOS Focus setting on other platforms. */
+internal fun List<WatchPreference<*>>.hideUnavailablePrefs(isIOS: Boolean): List<WatchPreference<*>> =
+    filterNot { it.pref.isInternal || (it.pref == BoolWatchPref.QuietTimeIosFocus && !isIOS) }
+
 /** Schedule hours sit directly under the toggle they belong to, and only while it is on. */
 internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchPreference<*>> {
     val hours = filter { it.pref is ScheduleWatchPref }
@@ -117,7 +123,9 @@ internal fun List<WatchPreference<*>>.groupQuietTimeScheduleHours(): List<WatchP
 fun watchPrefs(): List<SettingsItem> {
     val libPebble = rememberLibPebble()
     val coreConfigHolder = koinInject<CoreConfigHolder>()
-    val settings by libPebble.watchPrefs.collectAsState(emptyList())
+    val platform = koinInject<Platform>()
+    val allSettings by libPebble.watchPrefs.collectAsState(emptyList())
+    val settings = remember(allSettings, platform) { allSettings.hideUnavailablePrefs(platform.isIOS) }
     val coreConfig by coreConfigHolder.config.collectAsState()
     val weatherFetcher = koinInject<WeatherFetcher>()
     val quickLaunchOptions = quickLaunchOptions(libPebble)
@@ -247,6 +255,9 @@ internal val WATCH_PREF_LAYOUT: List<PrefLayout> = listOf(
 
     PrefLayout(BoolWatchPref.QuietTimeManuallyEnabled, Section.QuietTime),
     PrefLayout(BoolWatchPref.CalendarAwareQuietTime, Section.QuietTime),
+    PrefLayout(BoolWatchPref.QuietTimeIosFocus, Section.QuietTime),
+    // Phone-owned state, hidden from the screen.
+    PrefLayout(BoolWatchPref.IosFocusActive, Section.QuietTime),
     PrefLayout(BoolWatchPref.QuietTimeWeekdayScheduleEnabled, Section.QuietTime),
     PrefLayout(ScheduleWatchPref.QuietTimeWeekdaySchedule, Section.QuietTime),
     PrefLayout(BoolWatchPref.QuietTimeWeekendScheduleEnabled, Section.QuietTime),

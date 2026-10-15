@@ -7,6 +7,7 @@ import coredevices.pebble.services.PebbleHttpClient.Companion.get
 import io.rebble.libpebblecommon.connection.FirmwareUpdateCheckResult
 import io.rebble.libpebblecommon.services.FirmwareVersion
 import io.rebble.libpebblecommon.services.WatchInfo
+import io.rebble.libpebblecommon.services.drewBuildNumber
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -48,12 +49,6 @@ class DrewPebbleOsUpdateCheck(
         private val CACHE_TTL: Duration = 15.minutes
     }
 }
-
-private val DREW_BUILD_REGEX = Regex("-drew\\.([0-9]+)")
-
-/** The N in a `vX.Y.Z-drew.N` version, or null for a build that isn't DrewPebbleOS. */
-fun drewBuildNumber(version: String): Int? =
-    DREW_BUILD_REGEX.find(version)?.groupValues?.get(1)?.toIntOrNull()
 
 fun drewPebbleOsAssetName(platformRevision: String, tag: String): String =
     "normal_${platformRevision}_$tag.pbz"
