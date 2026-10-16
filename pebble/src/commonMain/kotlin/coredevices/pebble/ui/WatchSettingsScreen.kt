@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.filled.Timeline
@@ -169,6 +170,7 @@ import coredevices.util.transcription.spokenLanguageLabel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.crashlytics.crashlytics
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.connection.AppContext
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.KnownPebbleDevice
@@ -247,6 +249,7 @@ enum class Section(val title: String, val icon: ImageVector) {
     Connectivity("Connectivity", Icons.Default.Wifi),
     Music("Music", Icons.Default.MusicNote),
     Other("Other", Icons.Default.MoreHoriz), // watch only
+    DrewExperiments("Drew Experiments", Icons.Default.Science),
     Diagnostics("Diagnostics", Icons.Default.Timeline),
     Debug("Debug", Icons.Default.BugReport),
 }
@@ -569,6 +572,7 @@ fun rememberSettingsItemsState(navBarNav: NavBarNav?, snackbarDisplay: SnackbarD
     val healthPlatformSyncEnabled by healthSyncTracker.enabled.collectAsState()
     val healthIsSyncing by platformHealthSync.syncing.collectAsState()
     val preferredSources by libPebble.preferredSourcePlugins.collectAsState()
+    val drewExperimentsState by DrewExperiments.state.collectAsState()
 
     val rawSettingsItems = remember(
             libPebbleConfig,
@@ -586,6 +590,7 @@ fun rememberSettingsItemsState(navBarNav: NavBarNav?, snackbarDisplay: SnackbarD
             rebbleVoiceAvailable,
             platformSttAvailable,
             anyWatchSupportsFiveMinHrm,
+            drewExperimentsState,
         ) {
             listOfNotNull(
                 basicSettingsActionItem(
@@ -2268,7 +2273,13 @@ fun rememberSettingsItemsState(navBarNav: NavBarNav?, snackbarDisplay: SnackbarD
                     },
                     show = { pebbleFeatures.supportsMusic() },
                 ),
-            ) + watchPrefs
+            ) + watchPrefs + drewExperimentsSettingsItems(
+                navBarNav = navBarNav,
+                libPebble = libPebble,
+                libPebbleConfig = libPebbleConfig,
+                drewState = drewExperimentsState,
+                isIos = platform == Platform.IOS,
+            )
         }
 
     return SettingsItemsState(

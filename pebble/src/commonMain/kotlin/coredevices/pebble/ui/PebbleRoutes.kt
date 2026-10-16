@@ -90,6 +90,9 @@ object PebbleNavBarRoutes {
     data object BatterySettingsRoute : NavBarRoute
 
     @Serializable
+    data object DrewExperimentsRoute : NavBarRoute
+
+    @Serializable
     data object PermissionsRoute : NavBarRoute
 
     @Serializable
@@ -221,6 +224,9 @@ fun NavGraphBuilder.addNavBarRoutes(
     }
     composableWithAnimations<PebbleNavBarRoutes.BatterySettingsRoute>(viewModel) {
         BatterySettingsScreen(nav, topBarParams)
+    }
+    composableWithAnimations<PebbleNavBarRoutes.DrewExperimentsRoute>(viewModel) {
+        DrewExperimentsScreen(nav, topBarParams)
     }
     composableWithAnimations<PebbleNavBarRoutes.PermissionsRoute>(viewModel) {
         PermissionsScreen(nav, topBarParams)

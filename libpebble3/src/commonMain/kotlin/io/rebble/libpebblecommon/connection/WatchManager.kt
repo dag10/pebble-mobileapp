@@ -23,6 +23,7 @@ import io.rebble.libpebblecommon.di.ConnectionScopeProperties
 import io.rebble.libpebblecommon.di.HackyProvider
 import io.rebble.libpebblecommon.di.LibPebbleCoroutineScope
 import io.rebble.libpebblecommon.di.logWatchEvent
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.metadata.WatchColor
 import io.rebble.libpebblecommon.metadata.WatchHardwarePlatform
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
@@ -437,6 +438,7 @@ class WatchManager(
                         if (connectedDevice == null) {
                             logger.w { "$pebbleDevice isn't a CommonConnectedDevice" }
                         } else {
+                            DrewExperiments.count(DrewExperiments.WATCH_CONNECTED, "Watch connected")
                             _connectionEvents.emit(PebbleConnectionEvent.PebbleConnectedEvent(connectedDevice))
                         }
                     }
@@ -450,6 +452,7 @@ class WatchManager(
                             }
                         }
 
+                        DrewExperiments.count(DrewExperiments.WATCH_DISCONNECTED, "Watch disconnected")
                         _connectionEvents.emit(PebbleConnectionEvent.PebbleDisconnectedEvent(identifier))
                     }
 
