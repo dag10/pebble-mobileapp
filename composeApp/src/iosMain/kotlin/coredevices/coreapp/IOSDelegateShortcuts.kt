@@ -10,6 +10,7 @@ import coredevices.pebble.actions.PebbleQuietTimeActions
 import coredevices.pebble.actions.PebbleTimelineActions
 import coredevices.pebble.actions.PebbleWatchInfoActions
 import coredevices.pebble.actions.watch.getWatchScreenshotBase64
+import coredevices.util.Platform
 import io.rebble.libpebblecommon.SystemAppIDs
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.database.entity.MuteState
@@ -124,11 +125,20 @@ object IOSDelegateShortcuts : KoinComponent {
 
     /**
      * Called from the Pebble Quiet Time Focus Filter when a Focus that has it turns on or off.
+     * Calls back once the watch has the new state, or it timed out.
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("setIosFocusActiveWithActive")
-    fun setIosFocusActive(active: Boolean) {
-        quietTimeActions.setIosFocusActive(active)
+    fun setIosFocusActive(active: Boolean, @ObjCName("completion") callback: () -> Unit) {
+        GlobalScope.launch {
+            try {
+                get<Platform>().runWithBgTask("iOS Focus Quiet Time") {
+                    quietTimeActions.setIosFocusActive(active)
+                }
+            } finally {
+                callback()
+            }
+        }
     }
 
     /**

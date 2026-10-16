@@ -83,7 +83,7 @@ class IosPebbleQuietTimeActions(
         setQuietTimeInterruptions(libPebble, alertMaskName)
     }
 
-    override fun setIosFocusActive(active: Boolean) {
+    override suspend fun setIosFocusActive(active: Boolean) {
         setIosFocusActive(libPebble, active)
     }
 }

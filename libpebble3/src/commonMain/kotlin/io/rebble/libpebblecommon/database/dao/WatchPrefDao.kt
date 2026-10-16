@@ -4,7 +4,9 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import co.touchlab.kermit.Logger
+import io.rebble.libpebblecommon.connection.ConnectedPebbleDevice
 import io.rebble.libpebblecommon.connection.WatchPrefs
+import io.rebble.libpebblecommon.connection.Watches
 import io.rebble.libpebblecommon.database.MillisecondInstant
 import io.rebble.libpebblecommon.database.asMillisecond
 import io.rebble.libpebblecommon.database.entity.WatchPref
@@ -16,6 +18,9 @@ import io.rebble.libpebblecommon.di.LibPebbleCoroutineScope
 import io.rebble.libpebblecommon.packets.blobdb.BlobResponse
 import io.rebble.libpebblecommon.services.blobdb.DbWrite
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -53,6 +58,26 @@ interface WatchPrefRealDao : WatchPrefItemDao {
     @Query("SELECT * FROM WatchPrefItemEntity")
     fun getAllFlow(): Flow<List<WatchPrefItem>>
 
+    @Query(
+        """
+        SELECT NOT EXISTS (
+            SELECT 1
+            FROM WatchPrefItemEntity e
+            WHERE e.id = :id
+            AND e.deleted = 0
+            AND e.sync = 1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM WatchPrefItemSyncEntity s
+                WHERE s.recordId = e.id
+                AND s.transport = :transport
+                AND s.watchSynchHashcode = e.recordHashcode
+            )
+        )
+        """
+    )
+    fun isSyncedToWatch(transport: String, id: String): Flow<Boolean>
+
     companion object {
         private val logger = Logger.withTag("WatchPrefRealDao")
     }
@@ -68,6 +93,7 @@ data class WatchPreference<T>(
 
 class RealWatchPrefs(
     private val watchPrefRealDao: WatchPrefRealDao,
+    private val watches: Watches,
     private val libPebbleCoroutineScope: LibPebbleCoroutineScope,
     private val clock: Clock,
 ) : WatchPrefs {
@@ -92,6 +118,18 @@ class RealWatchPrefs(
             watchPrefRealDao.insertOrReplace(item)
         }
     }
+
+    override fun watchPrefSynced(pref: WatchPref<*>): Flow<Boolean> =
+        watches.watches.flatMapLatest { devices ->
+            val connected = devices.filterIsInstance<ConnectedPebbleDevice>()
+            if (connected.isEmpty()) {
+                flowOf(false)
+            } else {
+                combine(connected.map { watchPrefRealDao.isSyncedToWatch(it.identifier.asString, pref.id) }) { synced ->
+                    synced.all { it }
+                }
+            }
+        }
 }
 
 private fun <T> WatchPref<T>.toWatchPreference(rawValue: String): WatchPreference<T> {
