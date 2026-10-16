@@ -176,6 +176,12 @@ fun gradleStringPropOrNull(name: String): String? {
 fun gradleBooleanProp(name: String, default: Boolean): Boolean =
     gradleStringPropOrNull(name)?.let { it == "true" } ?: default
 
+// Read-only GitHub token for updating the owner's private apps. It lives in the private
+// workspace that contains this checkout; without it, those updates are off.
+val drewGithubReleasesToken = gradleStringPropOrNull("drewGithubReleasesToken")
+    ?: providers.fileContents(rootProject.layout.projectDirectory.file("../secrets/github-releases-token"))
+        .asText.orNull?.trim()?.takeIf { it.isNotEmpty() }
+
 buildkonfig {
     packageName = "coredevices.util"
     objectName = "CommonBuildKonfig"
@@ -196,6 +202,7 @@ buildkonfig {
         buildConfigField(FieldSpec.Type.BOOLEAN, "APPLE_AUTH_ENABLED", gradleBooleanProp("appleAuthEnabled", default = true).toString())
         buildConfigField(FieldSpec.Type.BOOLEAN, "GITHUB_AUTH_ENABLED", gradleBooleanProp("githubAuthEnabled", default = true).toString())
         buildConfigField(FieldSpec.Type.STRING, "CACTUS_PRO_KEY", gradleStringPropOrNull("cactusProKey"), nullable = true)
+        buildConfigField(FieldSpec.Type.STRING, "DREW_GITHUB_RELEASES_TOKEN", drewGithubReleasesToken, nullable = true)
         buildConfigField(FieldSpec.Type.STRING, "CACTUS_STT_MODEL", "parakeet-tdt-0.6b-v3")
         buildConfigField(FieldSpec.Type.STRING, "CACTUS_STT_MODEL_ENG", "parakeet-tdt-0.6b-v2")
         buildConfigField(FieldSpec.Type.STRING, "CACTUS_LM_MODEL_NAME", "needle-pebble-ft")
