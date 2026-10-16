@@ -1,6 +1,7 @@
 package coredevices.coreapp
 
 import co.touchlab.kermit.Logger
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,7 +25,8 @@ import kotlin.time.Clock
  * A temporary trail of everything the iOS Focus Quiet Time code sees, for debugging Focus changes
  * that never reach the watch. Each line goes to Documents/focus-debug.log (kept apart from the
  * main log, which rolls over in hours) and the main log, and some also post an iPhone
- * notification.
+ * notification (Settings > Drew Experiments can turn those off). Lines also go to
+ * [DrewExperiments], which that screen shows.
  *
  * Pull the file from a Mac with:
  * xcrun devicectl device copy from --device <id> --domain-type appDataContainer
@@ -72,7 +74,8 @@ object IosFocusDebugLog {
         } catch (e: Exception) {
             logger.e(e) { "Couldn't write the Focus debug log" }
         }
-        if (notify) postNotification(message)
+        DrewExperiments.log(message)
+        if (notify && DrewExperiments.state.value.focusNotifications) postNotification(message)
     }
 
     private fun postNotification(message: String) {
