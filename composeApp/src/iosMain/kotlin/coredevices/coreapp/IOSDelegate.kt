@@ -30,6 +30,7 @@ import coredevices.pebble.PebbleDeepLinkHandler
 import coredevices.util.isDebugBuild
 import io.rebble.libpebblecommon.connection.AppContext
 import io.rebble.libpebblecommon.connection.LibPebble
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import coredevices.pebble.permissions.handlePermissionNotificationResponse
 import coredevices.pebble.watchModule
 import coredevices.ring.agent.builtin_servlets.reminders.IOSBuiltInReminderIntegration
@@ -245,6 +246,7 @@ object IOSDelegate : KoinComponent {
             "didFinishLaunching() appVersion=$appVersion appVersionShort=$appVersionShort " +
                     "launchState=${application.applicationState.stateName()}"
         }
+        DrewExperiments.count(DrewExperiments.APP_LAUNCH)
         reportPreviousRunOutcome()
         // Can only use Koin after this point
 

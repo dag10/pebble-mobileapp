@@ -12,6 +12,7 @@ import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.META
 import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.PPOGATT_DEVICE_CHARACTERISTIC_SERVER
 import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.PPOGATT_DEVICE_SERVICE_UUID_SERVER
 import io.rebble.libpebblecommon.di.LibPebbleCoroutineScope
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.web.withTimeoutOr
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.addressOf
@@ -129,6 +130,10 @@ actual class GattServer(
         }
         wasRestoredFromKilledState = true
         logger.d { "restoredServices" }
+        DrewExperiments.count(
+            DrewExperiments.BLE_RESTORE,
+            "Relaunched by Bluetooth state restoration (watch subscribed: $wasSubscribedAtRestore)",
+        )
     }
 
     private fun findCharacteristic(
@@ -432,6 +437,7 @@ actual class GattServer(
             // relaunches us. Answer right away: after a relaunch nothing collects
             // characteristicReadRequest yet, and an unanswered read can drop the link.
             logger.i { "App Launch read from ${didReceiveReadRequest.central.identifier.UUIDString}" }
+            DrewExperiments.count(DrewExperiments.APP_LAUNCH_READ, "App Launch read from the watch")
             didReceiveReadRequest.setValue(NSData())
             peripheralManager.respondToRequest(didReceiveReadRequest, CBATTErrorSuccess)
             return

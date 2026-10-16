@@ -7,6 +7,7 @@ import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
 import io.rebble.libpebblecommon.connection.PhoneCapabilities
 import io.rebble.libpebblecommon.connection.PlatformFlags
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.metadata.WatchColor
 import io.rebble.libpebblecommon.metadata.WatchColor.Pebble2DuoBlack
 import io.rebble.libpebblecommon.metadata.WatchColor.Pebble2DuoWhite
@@ -224,6 +225,7 @@ class SystemService(
 
                     is PingPong.Ping -> {
                         logger.d { "Ping from the watch: cookie=${packet.cookie.get()}" }
+                        DrewExperiments.count(DrewExperiments.HEARTBEAT_PING, "Heartbeat ping ${packet.cookie.get()}")
                         protocolHandler.send(PingPong.Pong(packet.cookie.get()))
                     }
 

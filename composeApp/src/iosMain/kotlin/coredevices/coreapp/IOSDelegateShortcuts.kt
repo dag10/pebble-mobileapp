@@ -16,6 +16,7 @@ import coredevices.util.Platform
 import io.rebble.libpebblecommon.SystemAppIDs
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.database.entity.MuteState
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.locker.AppType
 import io.rebble.libpebblecommon.packets.blobdb.TimelineIcon
 import io.rebble.libpebblecommon.timeline.TimelineColor
@@ -133,12 +134,18 @@ object IOSDelegateShortcuts : KoinComponent {
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("setIosFocusActiveWithActive")
     fun setIosFocusActive(active: Boolean, source: String, callback: () -> Unit) {
+        if (source == "filter") DrewExperiments.count(DrewExperiments.FOCUS_FILTER_RUN)
         GlobalScope.launch(Dispatchers.Main) {
             lastSeenIosFocus = active
             try {
                 get<Platform>().runWithBgTask("iOS Focus Quiet Time") {
                     val result = quietTimeActions.setIosFocusActive(active)
                     val changed = result.before.phoneValue != active
+                    when {
+                        result.timedOut -> DrewExperiments.count(DrewExperiments.FOCUS_TIMEOUT)
+                        changed && (source == "launch" || source == "foreground") ->
+                            DrewExperiments.count(DrewExperiments.FOCUS_RESYNC_FIX)
+                    }
                     IosFocusDebugLog.record(
                         "$source: Focus ${onOff(active)} -> ${describe(result)}",
                         notify = source == "filter" || changed || result.timedOut,
@@ -164,11 +171,22 @@ object IOSDelegateShortcuts : KoinComponent {
                 IosFocusDebugLog.record("$source: iOS now reports Focus ${onOff(active)} (last seen ${lastSeenIosFocus?.let(::onOff)}), ${describe(state)}")
             }
             if (state.phoneValue != active) {
-                IosFocusDebugLog.record(
-                    "DRIFT ($source): iOS Focus is ${onOff(active)} but the watch was told ${onOff(state.phoneValue)}. iOS didn't run the filter for this change. Sending it now.",
-                    notify = true,
-                )
-                setIosFocusActive(active, source) {}
+                val sends = DrewExperiments.state.value.focusCatchUpSends
+                if (sends || lastIosFocusDrift != active) {
+                    IosFocusDebugLog.record(
+                        "DRIFT ($source): iOS Focus is ${onOff(active)} but the watch was told ${onOff(state.phoneValue)}. " +
+                            "iOS didn't run the filter for this change. " +
+                            if (sends) "Sending it now." else "Not sending it (catch-up is off in Drew Experiments).",
+                        notify = true,
+                    )
+                }
+                lastIosFocusDrift = active
+                if (sends) {
+                    DrewExperiments.count(DrewExperiments.FOCUS_CATCH_UP)
+                    setIosFocusActive(active, source) {}
+                }
+            } else {
+                lastIosFocusDrift = null
             }
             lastSeenIosFocus = active
         }
@@ -187,6 +205,7 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     private var lastSeenIosFocus: Boolean? = null
+    private var lastIosFocusDrift: Boolean? = null
 
     private fun onOff(active: Boolean) = if (active) "ON" else "OFF"
 
