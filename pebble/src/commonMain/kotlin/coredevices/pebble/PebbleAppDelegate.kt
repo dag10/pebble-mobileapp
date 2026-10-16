@@ -12,6 +12,7 @@ import coredevices.pebble.firmware.BatteryChargedNotifier
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.AnalyticsHeartbeatQueue
+import coredevices.pebble.services.DrewAppUpdates
 import coredevices.pebble.services.MemfaultChunkQueue
 import coredevices.pebble.services.PebbleWebServices
 import coredevices.pebble.weather.WeatherFetcher
@@ -68,6 +69,7 @@ class PebbleAppDelegate(
     private val plugins: Plugins,
     private val weatherPlugin: WeatherPlugin,
     private val permissionRequestNotifier: PermissionRequestNotifier,
+    private val drewAppUpdates: DrewAppUpdates,
 ) {
     private val logger = Logger.withTag("PebbleAppDelegate")
 
@@ -257,6 +259,9 @@ class PebbleAppDelegate(
             },
             scope.launch {
                 libPebble.requestLockerSync().await()
+            },
+            scope.launch {
+                drewAppUpdates.installAvailableUpdates()
             },
             scope.launch {
                 memfaultChunkQueue.uploadPendingFromDb()

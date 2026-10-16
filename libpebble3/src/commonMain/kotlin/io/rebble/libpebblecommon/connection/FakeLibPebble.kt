@@ -179,6 +179,10 @@ class FakeLibPebble : LibPebble {
         return true
     }
 
+    override suspend fun updateSideloadedApp(pbwPath: Path, loadOnWatch: Boolean): Boolean = true
+
+    override suspend fun sideloadedPbwPath(id: Uuid): Path? = null
+
     override fun getAllLockerBasicInfo(): Flow<List<AppBasicProperties>> {
         return flow { emit(emptyList()) }
     }

@@ -355,6 +355,10 @@ interface LockerApi {
      * [granted]: the answers to [reviewSideload].
      */
     suspend fun sideloadApp(pbwPath: Path, loadOnWatch: Boolean = true, granted: Map<String, Boolean?> = emptyMap()): Boolean
+    /** Sideloads a new build of an app, keeping its place in the locker and its active state. */
+    suspend fun updateSideloadedApp(pbwPath: Path, loadOnWatch: Boolean): Boolean
+    /** The pbw a sideloaded app was installed from; null if [id] isn't a sideloaded app. */
+    suspend fun sideloadedPbwPath(id: Uuid): Path?
     /** Null if there's nothing to ask, or the pbw can't be read. */
     suspend fun reviewSideload(pbwPath: Path): InstallReview?
     suspend fun reviewInstall(appUuid: Uuid, appName: String, requested: RequestedPermissions): InstallReview?

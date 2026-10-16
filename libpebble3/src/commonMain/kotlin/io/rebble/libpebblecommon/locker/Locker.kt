@@ -115,6 +115,22 @@ class Locker(
             false
         }
 
+    override suspend fun updateSideloadedApp(pbwPath: Path, loadOnWatch: Boolean): Boolean =
+        try {
+            sideloadApp(pbwApp = PbwApp(pbwPath), loadOnWatch = loadOnWatch, keepPlace = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Logger.e(e) { "Error while updating sideloaded app" }
+            errorTracker.reportError(UserFacingError.FailedToSideloadApp("Error while updating app"))
+            false
+        }
+
+    override suspend fun sideloadedPbwPath(id: Uuid): Path? {
+        val entry = lockerEntryDao.getEntry(id)?.takeIf { it.sideloaded } ?: return null
+        return lockerPBWCache.cachedPBWFileForApp(id, entry.version)
+    }
+
     /**
      * Get the locker contents, filtered by type/search query. Limit this, so that you don't run
      * out of memory if there is a particularly large locker.
@@ -346,15 +362,26 @@ class Locker(
      * This will insert the app into the locker database and optionally install it/launch it on the watch.
      * @param pbwApp The app to sideload.
      * @param loadOnWatch Whether to fully install the app on the watch (launch it). Defaults to true.
+     * @param keepPlace Keep an existing entry's order and active state instead of moving it to the top.
      */
-    suspend fun sideloadApp(pbwApp: PbwApp, loadOnWatch: Boolean, granted: Map<String, Boolean?> = emptyMap()): Boolean {
+    suspend fun sideloadApp(
+        pbwApp: PbwApp,
+        loadOnWatch: Boolean,
+        granted: Map<String, Boolean?> = emptyMap(),
+        keepPlace: Boolean = false,
+    ): Boolean {
         logger.d { "Sideloading app ${pbwApp.info.longName}" }
         val type = when {
             pbwApp.info.loadablePlugin != null && !pbwApp.hasWatchappBuild() -> AppType.Plugin
             pbwApp.info.watchapp.watchface -> AppType.Watchface
             else -> AppType.Watchapp
         }
-        val lockerEntry = pbwApp.toLockerEntry(clock.now(), orderIndexForInsert(type))
+        val newEntry = pbwApp.toLockerEntry(clock.now(), orderIndexForInsert(type))
+        val lockerEntry = if (keepPlace) {
+            newEntry.keepingPlaceOf(lockerEntryDao.getEntry(newEntry.id))
+        } else {
+            newEntry
+        }
         lockerPBWCache.deleteApp(lockerEntry.id)  // Clear old version(s) if re-sideloading
         pbwApp.source().buffered().use {
             lockerPBWCache.addPBWFileForApp(lockerEntry.id, pbwApp.info.versionLabel, it)
@@ -832,6 +859,9 @@ abstract class LockerPBWCache(private val context: AppContext) {
         }
     }
 }
+
+internal fun LockerEntry.keepingPlaceOf(existing: LockerEntry?): LockerEntry =
+    if (existing == null) this else copy(orderIndex = existing.orderIndex, active = existing.active)
 
 fun orderIndexForInsert(type: AppType) = when (type) {
     AppType.Watchface -> -1

@@ -475,6 +475,9 @@ fun LockerAppScreen(topBarParams: TopBarParams, uuid: Uuid?, navBarNav: NavBarNa
                             modifier = Modifier.padding(5.dp),
                         )
                     }
+                    if (entry.commonAppType is CommonAppType.Locker && entry.commonAppType.sideloaded) {
+                        DrewAppUpdateButton(entry.uuid, entry.title, topBarParams)
+                    }
                     if (entry.commonAppType is CommonAppType.Store && !viewModel.addedToLocker) {
 //                    val hasUuidConflict = remember(viewModel.storeEntries) { // One store has multiple entries with same uuid
 //                        viewModel.storeEntries?.let {
