@@ -9,6 +9,8 @@ import coredevices.pebble.actions.PebbleNotificationActions
 import coredevices.pebble.actions.PebbleQuietTimeActions
 import coredevices.pebble.actions.PebbleTimelineActions
 import coredevices.pebble.actions.PebbleWatchInfoActions
+import coredevices.pebble.actions.watch.IosFocusState
+import coredevices.pebble.actions.watch.IosFocusSyncResult
 import coredevices.pebble.actions.watch.getWatchScreenshotBase64
 import coredevices.util.Platform
 import io.rebble.libpebblecommon.SystemAppIDs
@@ -124,20 +126,84 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     /**
-     * Called from the Pebble Quiet Time Focus Filter when a Focus that has it turns on or off.
+     * Called from the Pebble Quiet Time Focus Filter when a Focus that has it turns on or off, and
+     * from the re-syncs on launch and foreground ([source] says which).
      * Calls back once the watch has the new state, or it timed out.
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("setIosFocusActiveWithActive")
-    fun setIosFocusActive(active: Boolean, callback: () -> Unit) {
-        GlobalScope.launch {
+    fun setIosFocusActive(active: Boolean, source: String, callback: () -> Unit) {
+        GlobalScope.launch(Dispatchers.Main) {
+            lastSeenIosFocus = active
             try {
                 get<Platform>().runWithBgTask("iOS Focus Quiet Time") {
-                    quietTimeActions.setIosFocusActive(active)
+                    val result = quietTimeActions.setIosFocusActive(active)
+                    val changed = result.before.phoneValue != active
+                    IosFocusDebugLog.record(
+                        "$source: Focus ${onOff(active)} -> ${describe(result)}",
+                        notify = source == "filter" || changed || result.timedOut,
+                    )
                 }
             } finally {
                 callback()
             }
+        }
+    }
+
+    /**
+     * Debug only: compares the Focus Filter state iOS reports with what the watch was told, without
+     * changing anything, to catch Focus changes iOS never ran the filter for.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("checkIosFocusWithActive")
+    fun checkIosFocus(active: Boolean, source: String) {
+        GlobalScope.launch(Dispatchers.Main) {
+            val state = quietTimeActions.iosFocusState()
+            if (lastSeenIosFocus != active) {
+                IosFocusDebugLog.record("$source: iOS now reports Focus ${onOff(active)} (last seen ${lastSeenIosFocus?.let(::onOff)}), ${describe(state)}")
+                lastSeenIosFocus = active
+            }
+            if (state.phoneValue != active) {
+                if (lastIosFocusDrift != active) {
+                    IosFocusDebugLog.record(
+                        "DRIFT ($source): iOS Focus is ${onOff(active)} but the watch was told ${onOff(state.phoneValue)}. iOS didn't run the filter for this change.",
+                        notify = true,
+                    )
+                    lastIosFocusDrift = active
+                }
+            } else {
+                lastIosFocusDrift = null
+            }
+        }
+    }
+
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("logIosFocusEventWithMessage")
+    fun logIosFocusEvent(message: String, notify: Boolean, callback: () -> Unit) {
+        GlobalScope.launch {
+            try {
+                IosFocusDebugLog.record(message, notify)
+            } finally {
+                callback()
+            }
+        }
+    }
+
+    private var lastSeenIosFocus: Boolean? = null
+    private var lastIosFocusDrift: Boolean? = null
+
+    private fun onOff(active: Boolean) = if (active) "ON" else "OFF"
+
+    private fun describe(state: IosFocusState) =
+        "phone=${onOff(state.phoneValue)} watchHasIt=${state.watchHasIt} watches=${state.connectedWatches}"
+
+    private fun describe(result: IosFocusSyncResult): String {
+        val seconds = result.duration.inWholeMilliseconds / 1000.0
+        return when {
+            result.timedOut -> "NOT on the watch after ${seconds}s (${describe(result.after)})"
+            result.before.phoneValue == result.after.phoneValue && result.before.watchHasIt ->
+                "watch already had it (${result.before.connectedWatches} watches)"
+            else -> "on the watch in ${seconds}s (was ${describe(result.before)})"
         }
     }
 
