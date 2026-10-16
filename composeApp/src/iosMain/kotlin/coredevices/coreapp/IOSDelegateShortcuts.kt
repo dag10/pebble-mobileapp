@@ -129,7 +129,7 @@ object IOSDelegateShortcuts : KoinComponent {
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("setIosFocusActiveWithActive")
-    fun setIosFocusActive(active: Boolean, @ObjCName("completion") callback: () -> Unit) {
+    fun setIosFocusActive(active: Boolean, callback: () -> Unit) {
         GlobalScope.launch {
             try {
                 get<Platform>().runWithBgTask("iOS Focus Quiet Time") {

@@ -438,7 +438,7 @@ struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
 
     private static func setIosFocusActive(_ active: Bool) async {
         await withCheckedContinuation { continuation in
-            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: active, completion: {
+            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: active, callback: {
                 continuation.resume()
             })
         }
