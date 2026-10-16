@@ -2,6 +2,7 @@ package io.rebble.libpebblecommon.database.dao
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.test.platform.app.InstrumentationRegistry
 import io.rebble.libpebblecommon.database.Database
 import io.rebble.libpebblecommon.database.asMillisecond
 import io.rebble.libpebblecommon.database.entity.WatchPrefItem
@@ -15,7 +16,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 class WatchPrefSyncTest {
-    private val db = Room.inMemoryDatabaseBuilder<Database>()
+    private val db = Room.inMemoryDatabaseBuilder<Database>(InstrumentationRegistry.getInstrumentation().targetContext)
         .setDriver(BundledSQLiteDriver())
         .build()
     private val dao = db.watchPrefDao()
