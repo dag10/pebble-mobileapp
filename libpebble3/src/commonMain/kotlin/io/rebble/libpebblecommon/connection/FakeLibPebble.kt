@@ -540,6 +540,8 @@ class FakeLibPebble : LibPebble {
         }
     }
 
+    override fun watchPrefSynced(pref: WatchPref<*>): Flow<Boolean> = flowOf(true)
+
     override fun updateWeatherData(weatherData: List<WeatherLocationData>) {
     }
 

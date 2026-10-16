@@ -25,7 +25,7 @@ interface PebbleQuietTimeActions {
     fun setQuietTimeEnabled(enabled: Boolean)
     fun setQuietTimeShowNotifications(show: Boolean)
     fun setQuietTimeInterruptions(alertMaskName: String)
-    fun setIosFocusActive(active: Boolean)
+    suspend fun setIosFocusActive(active: Boolean)
 }
 
 interface PebbleTimelineActions {
