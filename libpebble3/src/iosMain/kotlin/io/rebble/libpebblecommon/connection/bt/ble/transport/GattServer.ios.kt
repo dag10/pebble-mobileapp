@@ -5,6 +5,8 @@ import io.rebble.libpebblecommon.BleConfigFlow
 import io.rebble.libpebblecommon.connection.AppContext
 import io.rebble.libpebblecommon.connection.PebbleBleIdentifier
 import io.rebble.libpebblecommon.connection.asPebbleBleIdentifier
+import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.APPLAUNCH_CHARACTERISTIC
+import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.APPLAUNCH_SERVICE_UUID
 import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.FAKE_SERVICE_UUID
 import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.META_CHARACTERISTIC_SERVER
 import io.rebble.libpebblecommon.connection.bt.ble.pebble.LEConstants.UUIDs.PPOGATT_DEVICE_CHARACTERISTIC_SERVER
@@ -168,6 +170,24 @@ actual class GattServer(
                     ),
                 ),
             )
+            if (bleConfigFlow.value.publishAppLaunchService) {
+                addService(
+                    APPLAUNCH_SERVICE_UUID,
+                    listOf(
+                        CBMutableCharacteristic(
+                            type = APPLAUNCH_CHARACTERISTIC.asCbUuid(),
+                            properties = CBCharacteristicPropertyRead,
+                            value = null,
+                            permissions = CBAttributePermissionsReadable,
+                        ),
+                    ),
+                )
+            } else {
+                registeredServices.remove(APPLAUNCH_SERVICE_UUID)?.let {
+                    logger.d("removing the App Launch service")
+                    peripheralManager.removeService(it)
+                }
+            }
             wasRestoredFromKilledState = false
         }
     }
@@ -407,6 +427,15 @@ actual class GattServer(
         didReceiveReadRequest: CBATTRequest,
     ) {
         logger.d("didReceiveReadRequest for ${didReceiveReadRequest.characteristic.UUID}")
+        if (didReceiveReadRequest.characteristic.UUID.asUuid() == APPLAUNCH_CHARACTERISTIC) {
+            // The watch reads this when it has no Pebble Protocol session, so that iOS wakes or
+            // relaunches us. Answer right away: after a relaunch nothing collects
+            // characteristicReadRequest yet, and an unanswered read can drop the link.
+            logger.i { "App Launch read from ${didReceiveReadRequest.central.identifier.UUIDString}" }
+            didReceiveReadRequest.setValue(NSData())
+            peripheralManager.respondToRequest(didReceiveReadRequest, CBATTErrorSuccess)
+            return
+        }
         runBlocking {
             _characteristicReadRequest.emit(
                 ServerCharacteristicReadRequest(

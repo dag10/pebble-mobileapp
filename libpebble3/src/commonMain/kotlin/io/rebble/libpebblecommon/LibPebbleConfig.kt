@@ -143,6 +143,12 @@ data class BleConfig(
      * CBCentralManagerOptionShowPowerAlertKey=false whenever it passes options at all.
      */
     val centralStateRestoration: Boolean = false,
+    /**
+     * iOS only. Publish the App Launch GATT service, which the watch reads when it has no Pebble
+     * Protocol session so that iOS wakes or relaunches the app. Takes effect on the next app
+     * launch.
+     */
+    val publishAppLaunchService: Boolean = true,
     val filterScanResultsByUuid: Boolean = true,
 )
 
