@@ -95,6 +95,7 @@ data class GitHubRelease(
     val tagName: String,
     val body: String? = null,
     val assets: List<GitHubReleaseAsset> = emptyList(),
+    val name: String? = null,
 )
 
 @Serializable
@@ -102,4 +103,8 @@ data class GitHubReleaseAsset(
     val name: String,
     @SerialName("browser_download_url")
     val browserDownloadUrl: String,
+    /** The API url, which serves the file to a token holder on a private repo. */
+    val url: String = "",
+    /** "sha256:<hex>". */
+    val digest: String? = null,
 )

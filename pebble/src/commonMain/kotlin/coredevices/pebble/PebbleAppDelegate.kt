@@ -13,6 +13,7 @@ import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.BundledAppMigration
 import coredevices.pebble.services.AnalyticsHeartbeatQueue
+import coredevices.pebble.services.DrewAppUpdates
 import coredevices.pebble.services.MemfaultChunkQueue
 import coredevices.pebble.services.PebbleWebServices
 import coredevices.pebble.weather.WeatherFetcher
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+import org.koin.mp.KoinPlatform
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
@@ -269,6 +271,9 @@ class PebbleAppDelegate(
             },
             scope.launch {
                 libPebble.requestLockerSync().await()
+            },
+            scope.launch {
+                KoinPlatform.getKoin().get<DrewAppUpdates>().installAvailableUpdates()
             },
             scope.launch {
                 memfaultChunkQueue.uploadPendingFromDb()
