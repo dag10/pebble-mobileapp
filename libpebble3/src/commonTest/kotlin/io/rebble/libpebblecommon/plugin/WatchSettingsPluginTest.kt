@@ -12,6 +12,7 @@ import io.rebble.libpebblecommon.plugin.ActionDeclaration.Companion.PARAM_INSTAN
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -33,6 +34,8 @@ private class FakeWatchPrefs : WatchPrefs {
         written += watchPref
         state.value = state.value.map { if (it.pref == watchPref.pref) watchPref else it }
     }
+
+    override fun watchPrefSynced(pref: WatchPref<*>): Flow<Boolean> = flowOf(true)
 }
 
 private fun args(vararg pairs: Pair<String, String>): JsonObject = Json.decodeFromString(
