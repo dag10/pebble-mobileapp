@@ -1,6 +1,7 @@
 package io.rebble.libpebblecommon.services
 
 import co.touchlab.kermit.Logger
+import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.WatchConfigFlow
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
@@ -51,6 +52,7 @@ class SystemService(
     private val phoneCapabilities: PhoneCapabilities,
     private val platformFlags: PlatformFlags,
     private val watchConfig: WatchConfigFlow,
+    private val libPebbleConfigFlow: LibPebbleConfigFlow,
 ) : ProtocolService,
     ConnectedPebble.Debug, ConnectedPebble.Time {
     private val logger = Logger.withTag("SystemService")
@@ -100,7 +102,12 @@ class SystemService(
 
     private fun capabilitiesToSend(): List<ProtocolCapsFlag> {
         val caps = phoneCapabilities.capabilities.toList()
-        return if (watchConfig.value.notificationWindowState) caps else caps - ProtocolCapsFlag.SupportsNotificationWindowState
+        val upstreamCaps = if (watchConfig.value.notificationWindowState) caps else caps - ProtocolCapsFlag.SupportsNotificationWindowState
+        return if (libPebbleConfigFlow.value.bleConfig.drewHeartbeat) {
+            upstreamCaps + ProtocolCapsFlag.SupportsDrewHeartbeat
+        } else {
+            upstreamCaps
+        }
     }
 
     suspend fun sendPhoneVersionResponse() {
@@ -218,6 +225,11 @@ class SystemService(
                     is PingPong.Pong -> {
                         pongCallback?.complete(packet)
                         pongCallback = null
+                    }
+
+                    is PingPong.Ping -> {
+                        logger.d { "Ping from the watch: cookie=${packet.cookie.get()}" }
+                        protocolHandler.send(PingPong.Pong(packet.cookie.get()))
                     }
 
                     is TimeMessage.GetTimeUtcRequest-> {
