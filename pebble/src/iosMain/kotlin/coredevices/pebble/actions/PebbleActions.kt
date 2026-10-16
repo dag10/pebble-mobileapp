@@ -1,5 +1,8 @@
 package coredevices.pebble.actions
 
+import coredevices.pebble.actions.watch.IosFocusState
+import coredevices.pebble.actions.watch.IosFocusSyncResult
+
 /**
  * High-level Pebble actions that can be implemented per platform (iOS, Android, etc.).
  */
@@ -25,7 +28,8 @@ interface PebbleQuietTimeActions {
     fun setQuietTimeEnabled(enabled: Boolean)
     fun setQuietTimeShowNotifications(show: Boolean)
     fun setQuietTimeInterruptions(alertMaskName: String)
-    suspend fun setIosFocusActive(active: Boolean)
+    suspend fun setIosFocusActive(active: Boolean): IosFocusSyncResult
+    suspend fun iosFocusState(): IosFocusState
 }
 
 interface PebbleTimelineActions {

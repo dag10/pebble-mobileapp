@@ -46,7 +46,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             IOSDelegate.shared.addQemuWatch(address: qemuAddress)
         }
         if #available(iOS 16.0, *) {
-            PebbleQuietTimeFocusFilter.syncCurrent()
+            let state = application.applicationState == .background ? "background" : "foreground"
+            Task { await PebbleQuietTimeFocusFilter.log("launch (\(state))", notify: false) }
+            PebbleQuietTimeFocusFilter.syncCurrent(source: "launch")
+            PebbleQuietTimeFocusFilter.startDriftCheck()
         }
         return res
     }
@@ -114,7 +117,7 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject {
     func sceneDidBecomeActive(_ scene: UIScene) {
         IOSDelegate.shared.sceneDidBecomeActive()
         if #available(iOS 16.0, *) {
-            PebbleQuietTimeFocusFilter.syncCurrent()
+            PebbleQuietTimeFocusFilter.syncCurrent(source: "foreground")
         }
     }
 
