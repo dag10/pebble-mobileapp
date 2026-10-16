@@ -1,6 +1,7 @@
 package io.rebble.libpebblecommon.services
 
 import co.touchlab.kermit.Logger
+import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
 import io.rebble.libpebblecommon.connection.PhoneCapabilities
@@ -48,7 +49,8 @@ class SystemService(
     private val protocolHandler: PebbleProtocolHandler,
     private val scope: ConnectionCoroutineScope,
     private val phoneCapabilities: PhoneCapabilities,
-    private val platformFlags: PlatformFlags
+    private val platformFlags: PlatformFlags,
+    private val libPebbleConfigFlow: LibPebbleConfigFlow,
 ) : ProtocolService,
     ConnectedPebble.Debug, ConnectedPebble.Time {
     private val logger = Logger.withTag("SystemService")
@@ -96,6 +98,13 @@ class SystemService(
         return WatchColor.fromProtocolNumber(color)
     }
 
+    private fun capabilities(): Set<ProtocolCapsFlag> =
+        if (libPebbleConfigFlow.value.bleConfig.drewHeartbeat) {
+            phoneCapabilities.capabilities + ProtocolCapsFlag.SupportsDrewHeartbeat
+        } else {
+            phoneCapabilities.capabilities
+        }
+
     suspend fun sendPhoneVersionResponse() {
         // TODO put all this stuff in libpebble config
         protocolHandler.send(
@@ -107,7 +116,7 @@ class SystemService(
                 4u,
                 4u,
                 2u,
-                ProtocolCapsFlag.makeFlags(phoneCapabilities.capabilities.toList())
+                ProtocolCapsFlag.makeFlags(capabilities().toList())
             )
         )
     }
@@ -211,6 +220,11 @@ class SystemService(
                     is PingPong.Pong -> {
                         pongCallback?.complete(packet)
                         pongCallback = null
+                    }
+
+                    is PingPong.Ping -> {
+                        logger.d { "Ping from the watch: cookie=${packet.cookie.get()}" }
+                        protocolHandler.send(PingPong.Pong(packet.cookie.get()))
                     }
 
                     is TimeMessage.GetTimeUtcRequest-> {

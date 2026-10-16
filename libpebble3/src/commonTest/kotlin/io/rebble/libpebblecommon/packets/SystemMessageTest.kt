@@ -127,6 +127,13 @@ internal class SystemMessageTest {
     }
 
     @Test
+    fun drewHeartbeatCapabilityIsBit29() {
+        val flags = ProtocolCapsFlag.makeFlags(listOf(ProtocolCapsFlag.SupportsDrewHeartbeat))
+        assertEquals(0x20u.toUByte(), flags[3])
+        assertEquals(setOf(ProtocolCapsFlag.SupportsDrewHeartbeat), ProtocolCapsFlag.fromFlags(flags))
+    }
+
+    @Test
     fun drewFindPhoneCapabilityIsBit30() {
         val flags = ProtocolCapsFlag.makeFlags(listOf(ProtocolCapsFlag.SupportsDrewFindPhone))
         assertEquals(listOf(0u, 0u, 0u, 0x40u, 0u, 0u, 0u, 0u).map { it.toUByte() }, flags.toList())

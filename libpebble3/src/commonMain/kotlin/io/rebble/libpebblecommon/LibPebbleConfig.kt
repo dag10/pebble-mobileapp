@@ -149,6 +149,11 @@ data class BleConfig(
      * launch.
      */
     val publishAppLaunchService: Boolean = true,
+    /**
+     * Ask DrewPebbleOS to ping the phone every 5 minutes (and answer the pings), which wakes a
+     * suspended iOS app. Takes effect on the next connection.
+     */
+    val drewHeartbeat: Boolean = true,
     val filterScanResultsByUuid: Boolean = true,
 )
 
