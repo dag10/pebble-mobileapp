@@ -422,8 +422,9 @@ struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
         DisplayRepresentation(title: quietTime ? "Quiet Time On" : "Quiet Time Off")
     }
 
+    // iOS can suspend the app once this returns, so wait until the watch has the change.
     func perform() async throws -> some IntentResult {
-        IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: quietTime)
+        await Self.setIosFocusActive(quietTime)
         return .result()
     }
 
@@ -431,7 +432,15 @@ struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
     static func syncCurrent() {
         Task {
             guard let current = try? await PebbleQuietTimeFocusFilter.current else { return }
-            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: current.quietTime)
+            await setIosFocusActive(current.quietTime)
+        }
+    }
+
+    private static func setIosFocusActive(_ active: Bool) async {
+        await withCheckedContinuation { continuation in
+            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: active, completion: {
+                continuation.resume()
+            })
         }
     }
 }

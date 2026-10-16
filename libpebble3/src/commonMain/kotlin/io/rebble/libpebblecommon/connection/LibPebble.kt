@@ -37,6 +37,7 @@ import io.rebble.libpebblecommon.database.entity.OverlayDataEntity
 import io.rebble.libpebblecommon.database.entity.TimelineNotification
 import io.rebble.libpebblecommon.database.entity.WeatherAppEntry
 import io.rebble.libpebblecommon.database.entity.TimelinePin
+import io.rebble.libpebblecommon.database.entity.WatchPref
 import io.rebble.libpebblecommon.di.LibPebbleCoroutineScope
 import io.rebble.libpebblecommon.di.initKoin
 import io.rebble.libpebblecommon.health.Health
@@ -273,6 +274,8 @@ interface AnalyticsEvents {
 interface WatchPrefs {
     val watchPrefs: Flow<List<WatchPreference<*>>>
     fun setWatchPref(watchPref: WatchPreference<*>)
+    /** Whether every connected watch has [pref]'s current value. False while none are connected. */
+    fun watchPrefSynced(pref: WatchPref<*>): Flow<Boolean>
 }
 
 interface Watches {
