@@ -383,6 +383,8 @@ enum class ProtocolCapsFlag(val value: Int) {
     SupportsAppPermissions(27),
     SupportsMultipleLanguagePacks(28),
     // DrewPebbleOS only. The watch keeps the low 32 bits, so this sits well above upstream's.
+    // DrewPebbleOS only: answers pings and wants one every few minutes, to wake a suspended iOS app.
+    SupportsDrewHeartbeat(29),
     SupportsDrewFindPhone(30),
     ;
 
