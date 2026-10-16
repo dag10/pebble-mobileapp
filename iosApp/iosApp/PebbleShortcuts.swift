@@ -437,12 +437,13 @@ struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
         }
     }
 
-    /// Debug only: every couple of minutes the app is running, logs whether the Focus state iOS
-    /// reports differs from what the watch was told. Never changes anything.
+    /// Every minute the app runs, sends the Focus state iOS reports if the watch was told
+    /// otherwise. A suspended app doesn't run, but an overdue check runs as soon as anything wakes
+    /// it, such as the watch.
     static func startDriftCheck() {
         Task.detached {
             while true {
-                try? await Task.sleep(for: .seconds(120), clock: .continuous)
+                try? await Task.sleep(for: .seconds(60), clock: .continuous)
                 guard let current = await readCurrent(source: "periodic") else { continue }
                 IOSDelegateShortcuts.shared.checkIosFocusWithActive(active: current.quietTime, source: "periodic")
             }

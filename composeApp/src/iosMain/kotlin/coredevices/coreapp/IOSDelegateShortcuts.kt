@@ -151,8 +151,9 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     /**
-     * Debug only: compares the Focus Filter state iOS reports with what the watch was told, without
-     * changing anything, to catch Focus changes iOS never ran the filter for.
+     * Called every minute the app runs. iOS often skips the Focus Filter while the app is in the
+     * background, so this sends the Focus state iOS reports whenever it differs from what the
+     * watch was told.
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("checkIosFocusWithActive")
@@ -161,19 +162,15 @@ object IOSDelegateShortcuts : KoinComponent {
             val state = quietTimeActions.iosFocusState()
             if (lastSeenIosFocus != active) {
                 IosFocusDebugLog.record("$source: iOS now reports Focus ${onOff(active)} (last seen ${lastSeenIosFocus?.let(::onOff)}), ${describe(state)}")
-                lastSeenIosFocus = active
             }
             if (state.phoneValue != active) {
-                if (lastIosFocusDrift != active) {
-                    IosFocusDebugLog.record(
-                        "DRIFT ($source): iOS Focus is ${onOff(active)} but the watch was told ${onOff(state.phoneValue)}. iOS didn't run the filter for this change.",
-                        notify = true,
-                    )
-                    lastIosFocusDrift = active
-                }
-            } else {
-                lastIosFocusDrift = null
+                IosFocusDebugLog.record(
+                    "DRIFT ($source): iOS Focus is ${onOff(active)} but the watch was told ${onOff(state.phoneValue)}. iOS didn't run the filter for this change. Sending it now.",
+                    notify = true,
+                )
+                setIosFocusActive(active, source) {}
             }
+            lastSeenIosFocus = active
         }
     }
 
@@ -190,7 +187,6 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     private var lastSeenIosFocus: Boolean? = null
-    private var lastIosFocusDrift: Boolean? = null
 
     private fun onOff(active: Boolean) = if (active) "ON" else "OFF"
 
