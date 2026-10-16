@@ -424,26 +424,61 @@ struct PebbleQuietTimeFocusFilter: SetFocusFilterIntent {
 
     // iOS can suspend the app once this returns, so wait until the watch has the change.
     func perform() async throws -> some IntentResult {
-        await Self.setIosFocusActive(quietTime)
+        await Self.log("filter: perform(quietTime: \(quietTime)) called", notify: true)
+        await Self.setIosFocusActive(quietTime, source: "filter")
         return .result()
     }
 
     /// Catches up on a Focus change iOS couldn't deliver while the app wasn't running.
-    static func syncCurrent() {
+    static func syncCurrent(source: String) {
         Task {
-            guard let current = try? await PebbleQuietTimeFocusFilter.current else { return }
-            await setIosFocusActive(current.quietTime)
+            guard let current = await readCurrent(source: source) else { return }
+            await setIosFocusActive(current.quietTime, source: source)
         }
     }
 
-    private static func setIosFocusActive(_ active: Bool) async {
+    /// Debug only: every couple of minutes the app is running, logs whether the Focus state iOS
+    /// reports differs from what the watch was told. Never changes anything.
+    static func startDriftCheck() {
+        Task.detached {
+            while true {
+                try? await Task.sleep(for: .seconds(120), clock: .continuous)
+                guard let current = await readCurrent(source: "periodic") else { continue }
+                IOSDelegateShortcuts.shared.checkIosFocusWithActive(active: current.quietTime, source: "periodic")
+            }
+        }
+    }
+
+    private static func readCurrent(source: String) async -> PebbleQuietTimeFocusFilter? {
+        do {
+            return try await PebbleQuietTimeFocusFilter.current
+        } catch {
+            await log("\(source): couldn't read the current Focus filter: \(error)", notify: false)
+            return nil
+        }
+    }
+
+    static func log(_ message: String, notify: Bool) async {
         await withCheckedContinuation { continuation in
-            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: active, callback: {
+            IOSDelegateShortcuts.shared.logIosFocusEventWithMessage(message: message, notify: notify, callback: {
+                continuation.resume()
+            })
+        }
+    }
+
+    private static func setIosFocusActive(_ active: Bool, source: String) async {
+        await withCheckedContinuation { continuation in
+            IOSDelegateShortcuts.shared.setIosFocusActiveWithActive(active: active, source: source, callback: {
                 continuation.resume()
             })
         }
     }
 }
+
+// iOS skips a plain Focus Filter while the app is in the background (FB14715113). As a
+// LiveActivityIntent, iOS runs it in the app's process even then.
+@available(iOS 17.0, *)
+extension PebbleQuietTimeFocusFilter: LiveActivityIntent {}
 
 @available(iOS 16.0, *)
 struct SetQuietTimeShowNotificationsIntent: AppIntent {
