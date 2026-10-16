@@ -7,6 +7,9 @@ import coredevices.pebble.actions.watch.getWatchScreenshotBase64
 import coredevices.pebble.actions.watch.getWatchScreenshotBytes
 import coredevices.pebble.actions.watch.healthDebugStatsToJson
 import coredevices.pebble.actions.watch.insertTimelinePinRich
+import coredevices.pebble.actions.watch.IosFocusState
+import coredevices.pebble.actions.watch.IosFocusSyncResult
+import coredevices.pebble.actions.watch.iosFocusState
 import coredevices.pebble.actions.watch.isWatchConnected
 import coredevices.pebble.actions.watch.launchAppByUuid
 import coredevices.pebble.actions.watch.sendDetailedNotification
@@ -83,9 +86,10 @@ class IosPebbleQuietTimeActions(
         setQuietTimeInterruptions(libPebble, alertMaskName)
     }
 
-    override suspend fun setIosFocusActive(active: Boolean) {
+    override suspend fun setIosFocusActive(active: Boolean): IosFocusSyncResult =
         setIosFocusActive(libPebble, active)
-    }
+
+    override suspend fun iosFocusState(): IosFocusState = iosFocusState(libPebble)
 }
 
 class IosPebbleTimelineActions(
