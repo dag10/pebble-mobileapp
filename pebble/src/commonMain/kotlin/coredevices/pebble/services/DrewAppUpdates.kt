@@ -44,6 +44,7 @@ val DREW_APPS = listOf(
     DrewApp(Uuid.parse("bdf7a544-1545-4eba-8edc-029ca30ef8d3"), "dag10/Quartz-Private", "QuartzPlus.pbw"),
     DrewApp(Uuid.parse("c64aae42-b822-4d6d-995b-bc7c38e843f4"), "dag10/pebble-timer-private", "Timer.pbw"),
     DrewApp(Uuid.parse("14bd9cd3-14dc-4b81-bd58-2f1fb9b57978"), "dag10/pebble-stopwatch-private", "Stopwatch.pbw"),
+    DrewApp(Uuid.parse("13910369-efcc-45de-a371-7ca92bcc6162"), "dag10/pebble-claude", "Claude.pbw"),
 )
 
 data class DrewAppUpdate(
