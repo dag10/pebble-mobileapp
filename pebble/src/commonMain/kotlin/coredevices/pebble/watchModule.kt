@@ -15,6 +15,7 @@ import coredevices.pebble.account.RealBootConfigProvider
 import coredevices.pebble.account.RealFirestoreKnownWatchesSync
 import coredevices.pebble.account.RealFirestoreLocker
 import coredevices.pebble.account.RealPebbleAccount
+import coredevices.pebble.claude.ClaudeNotifications
 import coredevices.pebble.firmware.BatteryChargedNotifier
 import coredevices.pebble.firmware.Cohorts
 import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
@@ -214,6 +215,7 @@ val watchModule = module {
     singleOf(::FirmwareUpdateCheck)
     singleOf(::DrewPebbleOsUpdateCheck)
     single { DrewAppUpdates(json = get(), libPebble = get(), appContext = get(), clock = get()) }
+    single { ClaudeNotifications(libPebble = get(), settings = get(), appResumed = get(), clock = get()) }
     factoryOf(::PebbleFeatures)
     factoryOf(::WeatherFetcher)
     singleOf(::WeatherPlugin)
