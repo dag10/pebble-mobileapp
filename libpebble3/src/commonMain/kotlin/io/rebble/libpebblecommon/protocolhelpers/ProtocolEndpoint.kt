@@ -36,6 +36,7 @@ enum class ProtocolEndpoint(val value: UShort) {
     TIMELINE_ACTIONS(11440u),
     VOICE_CONTROL(11000u),
     HEALTH_SYNC(911u),
+    DREW_UPDATES(56833u /* 0xde01, DrewPebbleOS only */),
     INVALID_ENDPOINT(0xffffu);
 
     companion object {
