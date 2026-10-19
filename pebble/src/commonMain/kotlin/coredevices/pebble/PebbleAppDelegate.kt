@@ -8,6 +8,7 @@ import coredevices.analytics.heartbeatWatchConnectedName
 import coredevices.database.WeatherLocationDao
 import coredevices.database.insertDefaultWeatherLocationOnce
 import coredevices.firestore.UsersDao
+import coredevices.pebble.claude.ClaudeNotifications
 import coredevices.pebble.firmware.BatteryChargedNotifier
 import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
@@ -106,6 +107,7 @@ class PebbleAppDelegate(
             }
             permissionRequestNotifier.init()
             bundledAppMigration.init()
+            KoinPlatform.getKoin().get<ClaudeNotifications>().start(GlobalScope)
             if (platform == Platform.Android) {
                 // Onboarding on Android grants BT permissions, which may have been missing when
                 // libPebble.init() ran synchronously above. Kick off post-permission work now.
@@ -279,6 +281,9 @@ class PebbleAppDelegate(
             },
             scope.launch {
                 KoinPlatform.getKoin().get<DrewAppUpdates>().installAvailableUpdates()
+            },
+            scope.launch {
+                KoinPlatform.getKoin().get<ClaudeNotifications>().check()
             },
             scope.launch {
                 memfaultChunkQueue.uploadPendingFromDb()
