@@ -8,6 +8,7 @@ import coredevices.analytics.heartbeatWatchConnectedName
 import coredevices.database.WeatherLocationDao
 import coredevices.database.insertDefaultWeatherLocationOnce
 import coredevices.firestore.UsersDao
+import coredevices.pebble.claude.ClaudeNotifications
 import coredevices.pebble.firmware.BatteryChargedNotifier
 import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
@@ -48,6 +49,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+import org.koin.mp.KoinPlatform
 import kotlin.time.Clock
 
 class PebbleAppDelegate(
@@ -100,6 +102,7 @@ class PebbleAppDelegate(
                 libPebble.init()
             }
             permissionRequestNotifier.init()
+            KoinPlatform.getKoin().get<ClaudeNotifications>().start(GlobalScope)
             if (platform == Platform.Android) {
                 // Onboarding on Android grants BT permissions, which may have been missing when
                 // libPebble.init() ran synchronously above. Kick off post-permission work now.
@@ -268,6 +271,9 @@ class PebbleAppDelegate(
             },
             scope.launch {
                 drewAppUpdates.installAvailableUpdates()
+            },
+            scope.launch {
+                KoinPlatform.getKoin().get<ClaudeNotifications>().check()
             },
             scope.launch {
                 memfaultChunkQueue.uploadPendingFromDb()
