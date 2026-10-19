@@ -9,6 +9,7 @@ import coredevices.database.WeatherLocationDao
 import coredevices.database.insertDefaultWeatherLocationOnce
 import coredevices.firestore.UsersDao
 import coredevices.pebble.firmware.BatteryChargedNotifier
+import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.AnalyticsHeartbeatQueue
@@ -28,6 +29,7 @@ import io.rebble.libpebblecommon.connection.CommonConnectedDevice
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDevice
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDeviceInRecovery
+import io.rebble.libpebblecommon.connection.ConnectedWatchInfo
 import io.rebble.libpebblecommon.connection.ConnectingPebbleDevice
 import io.rebble.libpebblecommon.connection.FirmwareUpdateCheckResult
 import io.rebble.libpebblecommon.connection.KnownPebbleDevice
@@ -70,6 +72,7 @@ class PebbleAppDelegate(
     private val weatherPlugin: WeatherPlugin,
     private val permissionRequestNotifier: PermissionRequestNotifier,
     private val drewAppUpdates: DrewAppUpdates,
+    private val drewPebbleOsUpdateCheck: DrewPebbleOsUpdateCheck,
 ) {
     private val logger = Logger.withTag("PebbleAppDelegate")
 
@@ -139,7 +142,10 @@ class PebbleAppDelegate(
                     watches.forEach { watch ->
                         if (watch is ConnectedPebble.Firmware) {
                             watch.firmwareUpdateAvailable.result?.let { fwup ->
-                                if (fwup is FirmwareUpdateCheckResult.FoundUpdate) {
+                                val running = (watch as? ConnectedWatchInfo)?.watchInfo?.runningFwVersion
+                                if (fwup is FirmwareUpdateCheckResult.FoundUpdate && (running == null ||
+                                        drewPebbleOsUpdateCheck.shouldNotifyVanillaUpdate(fwup.version, running))
+                                ) {
                                     firmwareUpdateUiTracker.maybeNotifyFirmwareUpdate(
                                         fwup,
                                         watch.identifier,
