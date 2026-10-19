@@ -12,6 +12,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import coredevices.pebble.claude.ClaudeNotificationsScreen
 import io.rebble.libpebblecommon.locker.AppType
 import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
@@ -91,6 +92,9 @@ object PebbleNavBarRoutes {
 
     @Serializable
     data object DrewExperimentsRoute : NavBarRoute
+
+    @Serializable
+    data object ClaudeNotificationsRoute : NavBarRoute
 
     @Serializable
     data object PermissionsRoute : NavBarRoute
@@ -227,6 +231,9 @@ fun NavGraphBuilder.addNavBarRoutes(
     }
     composableWithAnimations<PebbleNavBarRoutes.DrewExperimentsRoute>(viewModel) {
         DrewExperimentsScreen(nav, topBarParams)
+    }
+    composableWithAnimations<PebbleNavBarRoutes.ClaudeNotificationsRoute>(viewModel) {
+        ClaudeNotificationsScreen(topBarParams)
     }
     composableWithAnimations<PebbleNavBarRoutes.PermissionsRoute>(viewModel) {
         PermissionsScreen(nav, topBarParams)

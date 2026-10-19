@@ -2,8 +2,11 @@ package io.rebble.libpebblecommon.drew
 
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
@@ -60,9 +63,16 @@ object DrewExperiments {
     private val settings: Settings by lazy { Settings() }
     private val _state = MutableStateFlow(load())
     val state: StateFlow<State> = _state.asStateFlow()
+    private val _heartbeats = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Each heartbeat ping from the watch (Claude reply notifications check the bridge on it). */
+    val heartbeats: SharedFlow<Unit> = _heartbeats.asSharedFlow()
 
     /** Counts [counter], and logs [message] if there is one. */
     fun count(counter: String, message: String? = null) {
+        if (counter == HEARTBEAT_PING) {
+            _heartbeats.tryEmit(Unit)
+        }
         val now = Clock.System.now().toEpochMilliseconds()
         change { state ->
             val previous = state.counters[counter] ?: Counter()

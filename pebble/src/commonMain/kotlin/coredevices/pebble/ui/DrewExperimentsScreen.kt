@@ -57,6 +57,15 @@ fun drewExperimentsSettingsItems(
                 action = { nav.navigateTo(PebbleNavBarRoutes.DrewExperimentsRoute) },
             )
         },
+        navBarNav?.let { nav ->
+            basicSettingsActionItem(
+                title = "Claude reply notifications",
+                description = "Notify on the watch about new Claude Code replies and permission prompts while the Claude app is closed",
+                topLevelType = TopLevelType.Phone,
+                section = Section.DrewExperiments,
+                action = { nav.navigateTo(PebbleNavBarRoutes.ClaudeNotificationsRoute) },
+            )
+        },
         basicSettingsToggleItem(
             title = "Watch heartbeat",
             description = "Ask DrewPebbleOS (drew.5 or later) to ping the phone every 5 minutes, which wakes the app so the Focus catch-up runs. Takes effect on the next watch connection",
