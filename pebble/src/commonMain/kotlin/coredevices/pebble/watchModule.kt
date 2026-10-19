@@ -28,6 +28,7 @@ import coredevices.pebble.services.AppstoreCache
 import coredevices.pebble.services.AppstoreService
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.DrewAppUpdates
+import coredevices.pebble.services.DrewWatchUpdates
 import coredevices.pebble.services.EngDashOta
 import coredevices.pebble.services.HybridTranscription
 import coredevices.pebble.services.LanguagePackRepository
@@ -215,6 +216,16 @@ val watchModule = module {
     singleOf(::FirmwareUpdateCheck)
     singleOf(::DrewPebbleOsUpdateCheck)
     single { DrewAppUpdates(json = get(), libPebble = get(), appContext = get(), clock = get()) }
+    single {
+        DrewWatchUpdates(
+            libPebble = get(),
+            settings = get(),
+            clock = get(),
+            drewAppUpdates = get(),
+            drewPebbleOsUpdateCheck = get(),
+            platform = get(),
+        )
+    }
     single { ClaudeNotifications(libPebble = get(), settings = get(), appResumed = get(), clock = get()) }
     factoryOf(::PebbleFeatures)
     factoryOf(::WeatherFetcher)

@@ -15,6 +15,7 @@ import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.AnalyticsHeartbeatQueue
 import coredevices.pebble.services.DrewAppUpdates
+import coredevices.pebble.services.DrewWatchUpdates
 import coredevices.pebble.services.MemfaultChunkQueue
 import coredevices.pebble.services.PebbleWebServices
 import coredevices.pebble.weather.WeatherFetcher
@@ -103,6 +104,7 @@ class PebbleAppDelegate(
             }
             permissionRequestNotifier.init()
             KoinPlatform.getKoin().get<ClaudeNotifications>().start(GlobalScope)
+            KoinPlatform.getKoin().get<DrewWatchUpdates>().start(GlobalScope)
             if (platform == Platform.Android) {
                 // Onboarding on Android grants BT permissions, which may have been missing when
                 // libPebble.init() ran synchronously above. Kick off post-permission work now.
