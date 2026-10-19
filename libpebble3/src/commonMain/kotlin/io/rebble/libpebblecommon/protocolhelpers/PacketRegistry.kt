@@ -12,6 +12,7 @@ import io.rebble.libpebblecommon.packets.blobdb.blobDB2PacketsRegister
 import io.rebble.libpebblecommon.packets.blobdb.blobDBPacketsRegister
 import io.rebble.libpebblecommon.packets.blobdb.timelinePacketsRegister
 import io.rebble.libpebblecommon.packets.dataLoggingPacketsRegister
+import io.rebble.libpebblecommon.packets.drewUpdatesPacketsRegister
 import io.rebble.libpebblecommon.packets.getBytesIncomingPacketsRegister
 import io.rebble.libpebblecommon.packets.healthSyncPacketsRegister
 import io.rebble.libpebblecommon.packets.logDumpPacketsRegister
@@ -55,6 +56,7 @@ object PacketRegistry {
         dataLoggingPacketsRegister()
         getBytesIncomingPacketsRegister()
         healthSyncPacketsRegister()
+        drewUpdatesPacketsRegister()
     }
 
     /**
