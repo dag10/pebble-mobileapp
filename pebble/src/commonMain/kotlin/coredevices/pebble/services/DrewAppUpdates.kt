@@ -54,6 +54,7 @@ data class DrewAppUpdate(
     val notes: String,
     val assetUrl: String,
     val sha256: String,
+    val size: Long = 0,
 )
 
 private const val SHA256_PREFIX = "sha256:"
@@ -76,6 +77,7 @@ fun drewAppUpdate(app: DrewApp, release: GitHubRelease, installedSha256: String)
         notes = release.body.orEmpty(),
         assetUrl = asset.url,
         sha256 = sha256,
+        size = asset.size,
     )
 }
 
@@ -110,7 +112,8 @@ class DrewAppUpdates(
         return drewAppUpdate(app, release, installed)
     }
 
-    suspend fun install(update: DrewAppUpdate): Boolean = installMutex.withLock {
+    /** [onDownloaded] runs once the pbw is downloaded, before it goes to the watch. */
+    suspend fun install(update: DrewAppUpdate, onDownloaded: suspend () -> Unit = {}): Boolean = installMutex.withLock {
         if (installedSha256(update.app) == update.sha256) {
             return true
         }
@@ -119,6 +122,7 @@ class DrewAppUpdates(
             if (!download(update, path)) {
                 return false
             }
+            onDownloaded()
             val running = libPebble.watches.value.filterIsInstance<ConnectedPebbleDevice>()
                 .any { it.runningApp.value == update.app.uuid }
             logger.i { "Installing ${update.name} (running=$running)" }

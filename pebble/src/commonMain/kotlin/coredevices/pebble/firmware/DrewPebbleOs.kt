@@ -32,6 +32,10 @@ class DrewPebbleOsUpdateCheck(
         return drewPebbleOsUpdate(release, watch.platform.revision, watch.runningFwVersion)
     }
 
+    /** The download size of [update] from the last fetched release; 0 if unknown. */
+    fun downloadSize(update: FirmwareUpdateCheckResult.FoundUpdate): Long =
+        cached?.first?.assets?.find { it.browserDownloadUrl == update.url }?.size ?: 0
+
     suspend fun shouldNotifyVanillaUpdate(update: FirmwareVersion, running: FirmwareVersion): Boolean =
         isVanillaUpdateNewerThanDrew(update, running, latestRelease(force = false)?.tagName)
 
@@ -137,4 +141,5 @@ data class GitHubReleaseAsset(
     val url: String = "",
     /** "sha256:<hex>". */
     val digest: String? = null,
+    val size: Long = 0,
 )
