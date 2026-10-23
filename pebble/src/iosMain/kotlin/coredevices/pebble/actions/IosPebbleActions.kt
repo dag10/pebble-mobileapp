@@ -14,6 +14,7 @@ import coredevices.pebble.actions.watch.isWatchConnected
 import coredevices.pebble.actions.watch.launchAppByUuid
 import coredevices.pebble.actions.watch.sendDetailedNotification
 import coredevices.pebble.actions.watch.sendSimpleNotification
+import coredevices.pebble.actions.watch.sendWatchNotification
 import coredevices.pebble.actions.watch.setBacklightMotion
 import coredevices.pebble.actions.watch.setNotificationBacklight
 import coredevices.pebble.actions.watch.setNotificationFilter
@@ -23,6 +24,7 @@ import coredevices.pebble.actions.watch.setQuietTimeInterruptions
 import coredevices.pebble.actions.watch.setQuietTimeShowNotifications
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.connection.NotificationApps
+import io.rebble.libpebblecommon.database.entity.DrewNotificationFlags
 import io.rebble.libpebblecommon.database.entity.MuteState
 import io.rebble.libpebblecommon.js.RemoteTimelineEmulator
 import kotlin.uuid.Uuid
@@ -53,6 +55,21 @@ class IosPebbleNotificationActions(
         iconCode: String?,
     ) {
         sendDetailedNotification(libPebble, title, body, colorName, iconCode)
+    }
+
+    override fun sendWatchNotification(
+        title: String?,
+        message: String?,
+        critical: Boolean,
+        discreet: Boolean,
+        breakThroughQuietTime: Boolean,
+    ) {
+        sendWatchNotification(
+            libPebble,
+            title,
+            message,
+            DrewNotificationFlags(critical, discreet, breakThroughQuietTime),
+        )
     }
 
     override fun setAppMuteState(packageName: String, mute: Boolean) {

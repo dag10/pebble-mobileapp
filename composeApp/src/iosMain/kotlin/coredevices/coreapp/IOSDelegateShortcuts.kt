@@ -70,6 +70,22 @@ object IOSDelegateShortcuts : KoinComponent {
     }
 
     /**
+     * Called from the iOS Shortcut to send a notification only to the watch. DrewPebbleOS shows the
+     * flags; other firmware gets the notification without them, or a placeholder if discreet.
+     */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("sendWatchNotification")
+    fun sendWatchNotification(
+        title: String?,
+        message: String?,
+        critical: Boolean,
+        discreet: Boolean,
+        breakThroughQuietTime: Boolean,
+    ) {
+        notificationActions.sendWatchNotification(title, message, critical, discreet, breakThroughQuietTime)
+    }
+
+    /**
      * Called from the iOS Shortcut to get the list of timeline colors for the picker.
      */
     @OptIn(ExperimentalObjCName::class)
