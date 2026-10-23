@@ -141,6 +141,16 @@ internal class SystemMessageTest {
     }
 
     @Test
+    fun drewNotificationFlagsCapabilityIsBit31() {
+        val flags = ProtocolCapsFlag.makeFlags(listOf(ProtocolCapsFlag.SupportsDrewNotificationFlags))
+        assertEquals(listOf(0u, 0u, 0u, 0x80u, 0u, 0u, 0u, 0u).map { it.toUByte() }, flags.toList())
+        assertEquals(
+            setOf(ProtocolCapsFlag.SupportsDrewNotificationFlags),
+            ProtocolCapsFlag.fromFlags(flags),
+        )
+    }
+
+    @Test
     fun serializeDeserializeSetTimeUtcMessage() {
         val originalMessage = TimeMessage.SetUTC(
             12345678u,

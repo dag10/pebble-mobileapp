@@ -181,6 +181,7 @@ private val TimelineAttribute.requiredCapability: ProtocolCapsFlag?
         TimelineAttribute.VibrationPattern -> ProtocolCapsFlag.SupportsCustomVibePatterns
         TimelineAttribute.ImageAspectRatio -> ProtocolCapsFlag.SupportsNotificationImages
         TimelineAttribute.WeatherPinKind -> ProtocolCapsFlag.SupportsUnknownTimelineAttributes
+        TimelineAttribute.DrewNotificationFlags -> ProtocolCapsFlag.SupportsDrewNotificationFlags
         else -> null
     }
 
@@ -204,9 +205,11 @@ interface DbTimelineItem : BlobDbItem {
             type = type(),
             flags = TimelineItem.Flag.makeFlags(content.flags),
             layout = content.layout,
-            attributes = content.attributes.filterNot { attr ->
-                attr.attribute.requiredCapability?.let { it !in params.capabilities } == true
-            }.map { it.asAttribute() },
+            attributes = content.attributes
+                .withDiscreetFallback(params.capabilities)
+                .filterNot { attr ->
+                    attr.attribute.requiredCapability?.let { it !in params.capabilities } == true
+                }.map { it.asAttribute() },
             actions = content.actions.map { it.asAction() },
         )
         return item.toBytes()

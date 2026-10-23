@@ -382,6 +382,8 @@ enum class ProtocolCapsFlag(val value: Int) {
     // DrewPebbleOS only: answers pings and wants one every few minutes, to wake a suspended iOS app.
     SupportsDrewHeartbeat(29),
     SupportsDrewFindPhone(30),
+    // DrewPebbleOS only, announced by the watch: shows TimelineAttribute.DrewNotificationFlags.
+    SupportsDrewNotificationFlags(31),
     ;
 
     companion object {
