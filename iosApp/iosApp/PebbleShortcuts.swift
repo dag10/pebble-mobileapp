@@ -391,6 +391,51 @@ struct SendDetailedNotificationIntent: AppIntent {
 }
 
 @available(iOS 16.0, *)
+struct SendWatchNotificationIntent: AppIntent {
+    static var title: LocalizedStringResource = "Send Watch Notification"
+    static var description = IntentDescription("Sends a notification to your Pebble watch only. Critical vibrates until you press a button, Discreet hides the contents until you press Select, and Break Through Quiet Time shows it even during Quiet Time. The options need DrewPebbleOS; other watches get the plain notification, and a placeholder for a discreet one.", categoryName: "Notifications")
+
+    @Parameter(title: "Title")
+    var title: String?
+
+    @Parameter(
+        title: "Message",
+        inputOptions: String.IntentInputOptions(multiline: true)
+    )
+    var message: String?
+
+    @Parameter(title: "Critical", description: "Vibrate continuously until a button is pressed on the watch.", default: false)
+    var critical: Bool
+
+    @Parameter(title: "Discreet", description: "Show only a placeholder until Select is pressed on the watch.", default: false)
+    var discreet: Bool
+
+    @Parameter(title: "Break Through Quiet Time", description: "Show, vibrate and light up even during Quiet Time.", default: false)
+    var breakThroughQuietTime: Bool
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Send watch notification") {
+            \.$title
+            \.$message
+            \.$critical
+            \.$discreet
+            \.$breakThroughQuietTime
+        }
+    }
+
+    func perform() async throws -> some IntentResult {
+        IOSDelegateShortcuts.shared.sendWatchNotification(
+            title: title,
+            message: message,
+            critical: critical,
+            discreet: discreet,
+            breakThroughQuietTime: breakThroughQuietTime
+        )
+        return .result()
+    }
+}
+
+@available(iOS 16.0, *)
 struct SetQuietTimeIntent: AppIntent {
     static var title: LocalizedStringResource = "Set Quiet Time"
     static var description = IntentDescription("Turn Quiet Time on or off on your watch.", categoryName: "Preferences")
@@ -775,6 +820,13 @@ struct PebbleShortcutsProvider: AppShortcutsProvider {
             phrases: [
                 "Send detailed notification in \(.applicationName)",
                 "Send notification with title and icon in \(.applicationName)"
+            ]
+        )
+        AppShortcut(
+            intent: SendWatchNotificationIntent(),
+            phrases: [
+                "Send watch notification in \(.applicationName)",
+                "Send a critical notification in \(.applicationName)"
             ]
         )
         AppShortcut(

@@ -19,6 +19,14 @@ interface PebbleNotificationActions {
         iconCode: String?,
     )
 
+    fun sendWatchNotification(
+        title: String?,
+        message: String?,
+        critical: Boolean,
+        discreet: Boolean,
+        breakThroughQuietTime: Boolean,
+    )
+
     fun setAppMuteState(packageName: String, mute: Boolean)
     fun setNotificationBacklight(enabled: Boolean)
     fun setNotificationFilter(alertMaskName: String)

@@ -1,9 +1,11 @@
 package coredevices.pebble.actions.watch
 
+import coredevices.pebble.actions.watchNotification
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.database.dao.WatchPreference
 import io.rebble.libpebblecommon.database.entity.AlertMask
 import io.rebble.libpebblecommon.database.entity.BoolWatchPref
+import io.rebble.libpebblecommon.database.entity.DrewNotificationFlags
 import io.rebble.libpebblecommon.database.entity.EnumWatchPref
 import io.rebble.libpebblecommon.database.entity.buildTimelineNotification
 import io.rebble.libpebblecommon.packets.blobdb.TimelineIcon
@@ -31,6 +33,17 @@ fun sendSimpleNotification(libPebble: LibPebble, title: String, body: String) {
             }
         }
         libPebble.sendNotification(notif, null)
+    }
+}
+
+fun sendWatchNotification(
+    libPebble: LibPebble,
+    title: String?,
+    message: String?,
+    flags: DrewNotificationFlags,
+) {
+    GlobalScope.launch {
+        libPebble.sendNotification(watchNotification(title, message, flags, Clock.System.now()), null)
     }
 }
 
