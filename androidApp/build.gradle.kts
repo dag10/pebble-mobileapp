@@ -59,6 +59,8 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // iOS-only static libs from :cactus commonMain resources
+            excludes += "ios/**"
         }
     }
     buildTypes {
