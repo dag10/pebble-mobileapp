@@ -36,7 +36,8 @@ actual class PhoneSoundPlayer(
     private var previousAlarmVolume: Int? = null
     private var stopReceiver: BroadcastReceiver? = null
 
-    actual fun startRinging() {
+    // The alarm stream is always raised to its maximum, so raiseVolume changes nothing here.
+    actual fun startRinging(raiseVolume: Boolean) {
         if (_isRinging.value) return
         val context = appContext.context
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager

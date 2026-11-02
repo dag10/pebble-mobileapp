@@ -35,7 +35,7 @@ class FindPhoneManager(
         logger.d { "Watch asked to ring the phone" }
         ringJob?.cancelAndJoin()
         ringJob = watchScope.launch {
-            soundPlayer.startRinging()
+            soundPlayer.startRinging(raiseVolume = true)
             // Also stops the sound if the watch disconnects while it plays.
             try {
                 delay(RING_DURATION)

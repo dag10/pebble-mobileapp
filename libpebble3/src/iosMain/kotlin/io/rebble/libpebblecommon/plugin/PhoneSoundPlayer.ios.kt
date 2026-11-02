@@ -38,17 +38,19 @@ actual class PhoneSoundPlayer {
     actual val isRinging: Flow<Boolean> = _isRinging.asStateFlow()
 
     private var player: AVAudioPlayer? = null
+    private val volumeRaiser = SystemVolumeRaiser()
+    private var raisedVolume = false
 
-    actual fun startRinging() {
+    actual fun startRinging(raiseVolume: Boolean) {
         if (_isRinging.value) return
         activatePlaybackSession()
         // outputVolume reflects the last value seen while the session was active: a change made
         // between rings (session inactive) isn't picked up until the session has been active again.
         val volume = AVAudioSession.sharedInstance().outputVolume
         val needsCritical = volume < MIN_AUDIBLE_VOLUME
-        logger.i { "startRinging: outputVolume=$volume needsCritical=$needsCritical" }
+        logger.i { "startRinging: outputVolume=$volume needsCritical=$needsCritical raiseVolume=$raiseVolume" }
         if (!needsCritical) {
-            startAudioPlayer()
+            startAudioPlayer(raiseVolume)
             return
         }
         // Availability is only readable async, so the fallback choice is made in the callback.
@@ -57,7 +59,7 @@ actual class PhoneSoundPlayer {
                 deactivateSession() // the critical alert plays via the notification system
                 postCriticalAlert()
             } else {
-                startAudioPlayer()
+                startAudioPlayer(raiseVolume)
             }
         }
     }
@@ -112,7 +114,7 @@ actual class PhoneSoundPlayer {
         _isRinging.value = true
     }
 
-    private fun startAudioPlayer() {
+    private fun startAudioPlayer(raiseVolume: Boolean) {
         try {
             val url = NSBundle.mainBundle.URLForResource("find_my_phone", withExtension = "caf")
                 ?: NSURL.fileURLWithPath(SYSTEM_ALARM_SOUND)
@@ -126,6 +128,10 @@ actual class PhoneSoundPlayer {
                 play()
             }
             _isRinging.value = true
+            if (raiseVolume) {
+                raisedVolume = true
+                volumeRaiser.raise()
+            }
         } catch (e: Exception) {
             logger.w(e) { "Failed to start ringing" }
             cleanUp()
@@ -140,9 +146,11 @@ actual class PhoneSoundPlayer {
     private fun cleanUp() {
         player?.stop()
         player = null
-        memScoped {
-            val err = alloc<ObjCObjectVar<NSError?>>()
-            AVAudioSession.sharedInstance().setActive(false, error = err.ptr)
+        if (raisedVolume) {
+            raisedVolume = false
+            volumeRaiser.restore { if (!_isRinging.value) deactivateSession() }
+        } else {
+            deactivateSession()
         }
         UNUserNotificationCenter.currentNotificationCenter()
             .removeDeliveredNotificationsWithIdentifiers(listOf(CRITICAL_NOTIFICATION_ID))
