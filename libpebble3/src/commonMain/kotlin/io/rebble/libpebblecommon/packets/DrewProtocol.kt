@@ -31,6 +31,11 @@ enum class DrewCoreCommand(val value: UByte) {
     HeartbeatAck(0x82u),
 }
 
+enum class DrewFindPhoneCommand(val value: UByte) {
+    Start(0x01u),
+    Stop(0x02u),
+}
+
 /** Numbered independently of every upstream namespace. Never reuse a retired bit. */
 enum class DrewFeature(val bit: Int) {
     Updates(0),
@@ -153,6 +158,12 @@ class DrewHeartbeatAck(cookie: UInt = 0u) : DrewMessage(DrewService.Core, DrewCo
     val cookie = SUInt(m, cookie, Endian.Little)
 }
 
+/** The watch's Settings > Bluetooth > Ping Phone: ring the phone so it can be found, or stop early. */
+sealed class DrewFindPhone(command: DrewFindPhoneCommand) : DrewMessage(DrewService.FindPhone, command.value) {
+    class Start : DrewFindPhone(DrewFindPhoneCommand.Start)
+    class Stop : DrewFindPhone(DrewFindPhoneCommand.Stop)
+}
+
 private val logger = Logger.withTag("DrewProtocol")
 
 /** Every watch -> phone message, by (service, command). */
@@ -161,6 +172,8 @@ private val DECODERS: Map<Pair<UByte, UByte>, () -> DrewMessage> = mapOf(
     (DrewService.Core.value to DrewCoreCommand.Heartbeat.value) to { DrewHeartbeat() },
     (DrewService.Updates.value to DrewUpdatesMessage.Message.ListRequest.value) to { DrewUpdatesMessage.ListRequest() },
     (DrewService.Updates.value to DrewUpdatesMessage.Message.InstallRequest.value) to { DrewUpdatesMessage.InstallRequest() },
+    (DrewService.FindPhone.value to DrewFindPhoneCommand.Start.value) to { DrewFindPhone.Start() },
+    (DrewService.FindPhone.value to DrewFindPhoneCommand.Stop.value) to { DrewFindPhone.Stop() },
 )
 
 /** Never throws: a message it can't parse comes back as a [DrewPacket]. */
