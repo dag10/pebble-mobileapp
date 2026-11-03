@@ -11,10 +11,10 @@ import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.connection.PebbleIdentifier
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdateTrigger
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater.FirmwareUpdateStatus
+import io.rebble.libpebblecommon.packets.DrewFeature
 import io.rebble.libpebblecommon.packets.DrewUpdatesMessage
 import io.rebble.libpebblecommon.packets.DrewUpdatesMessage.InstallState
 import io.rebble.libpebblecommon.packets.DrewUpdatesMessage.ListStatus
-import io.rebble.libpebblecommon.services.isDrewPebbleOs
 import io.rebble.libpebblecommon.protocolhelpers.PebblePacket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -25,6 +25,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,7 +45,7 @@ import kotlin.uuid.Uuid
 /**
  * DrewMobileApp only: answers DrewPebbleOS's Settings > Updates page ([DrewUpdatesMessage]) with
  * the DrewPebbleOS, official PebbleOS and [DREW_APPS] updates, and installs one when asked. Talks
- * only to DrewPebbleOS watches, and only in answer to them.
+ * only to watches with [DrewFeature.Updates], and only in answer to them.
  * The protocol is specified in pebble-workspace's docs/drew-os-extensions.md.
  */
 class DrewWatchUpdates(
@@ -67,12 +68,14 @@ class DrewWatchUpdates(
     fun start(scope: CoroutineScope) {
         scope.launch {
             libPebble.watches
-                .map { watches -> watches.filterIsInstance<ConnectedPebbleDevice>().filter { it.speaksDrewUpdates() } }
+                .map { watches -> watches.filterIsInstance<ConnectedPebbleDevice>() }
                 // A connection's inbound flow is the same object for as long as it lasts.
                 .distinctUntilChangedBy { watches -> watches.map { it.inboundMessages } }
                 .flatMapLatest { watches ->
                     watches.map { watch ->
-                        watch.inboundMessages.filterIsInstance<DrewUpdatesMessage>().map { watch.identifier to it }
+                        watch.inboundMessages.filterIsInstance<DrewUpdatesMessage>()
+                            .filter { watch.speaksDrewUpdates() }
+                            .map { watch.identifier to it }
                     }.merge()
                 }
                 .collect { (identifier, message) ->
@@ -319,9 +322,7 @@ class DrewWatchUpdates(
         libPebble.watches.value.filterIsInstance<ConnectedPebbleDevice>()
             .find { it.identifier == identifier && it.speaksDrewUpdates() }
 
-    // TODO(DrewOS extension protocol): temporary. Capability bit 28 from the watch is upstream's
-    // SupportsMultipleLanguagePacks now, so this goes by the DrewPebbleOS version string.
-    private fun ConnectedPebbleDevice.speaksDrewUpdates() = watchInfo.runningFwVersion.isDrewPebbleOs()
+    private fun ConnectedPebbleDevice.speaksDrewUpdates() = DrewFeature.Updates in drewFeatures.value
 
     private fun load(serial: String): WatchUpdateList = try {
         settings.getStringOrNull(settingsKey(serial))?.let { json.decodeFromString(WatchUpdateList.serializer(), it) }

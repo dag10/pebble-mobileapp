@@ -15,9 +15,6 @@ import io.rebble.libpebblecommon.util.Endian
  * for [SString], two for the changelog. The spec is in pebble-workspace's docs/drew-os-extensions.md
  * ("Watch Updates protocol").
  */
-// TODO(DrewOS extension protocol): the phone announces no Drew Updates support until the Drew hello
-// replaces capability bit 28, which is upstream's SupportsMultipleLanguagePacks, so DrewPebbleOS's
-// Settings > Updates says the phone doesn't support it until then.
 open class DrewUpdatesMessage(message: Message) : DrewMessage(DrewService.Updates, message.value) {
     enum class Message(val value: UByte) {
         /** Watch -> phone: send the update list (and re-check if [ListRequest.FLAG_RECHECK]). */
