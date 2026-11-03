@@ -17,6 +17,7 @@ import io.rebble.libpebblecommon.connection.bt.BluetoothState
 import io.rebble.libpebblecommon.connection.bt.BluetoothStateProvider
 import io.rebble.libpebblecommon.connection.bt.ble.transport.GattServerManager
 import io.rebble.libpebblecommon.connection.bt.ble.transport.impl.configureKableCentral
+import io.rebble.libpebblecommon.connection.endpointmanager.drew.DrewPhoneBuild
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.ActionOverrides
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.CustomTimelineActionHandler
 import io.rebble.libpebblecommon.contacts.PhoneContactsSyncer
@@ -672,8 +673,9 @@ class LibPebble3(
             transcriptionProvider: TranscriptionProvider,
             injectedPKJSHttpInterceptors: InjectedPKJSHttpInterceptors = InjectedPKJSHttpInterceptors(emptyList()),
             pluginOAuthApi: PluginOAuthApi? = null,
+            drewPhoneBuild: DrewPhoneBuild = DrewPhoneBuild(""),
         ): LibPebble {
-            koin = initKoin(defaultConfig, webServices, appContext, tokenProvider, proxyTokenProvider, transcriptionProvider, injectedPKJSHttpInterceptors, pluginOAuthApi)
+            koin = initKoin(defaultConfig, webServices, appContext, tokenProvider, proxyTokenProvider, transcriptionProvider, injectedPKJSHttpInterceptors, pluginOAuthApi, drewPhoneBuild)
             // Reads the persisted config (not defaultConfig), but must still precede anything that
             // touches Kable's shared central manager. Every Koin single here is lazy, and Kable is
             // only reached on the first scan/connect, which happens after create() returns.

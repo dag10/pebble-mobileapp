@@ -15,6 +15,7 @@ import io.rebble.libpebblecommon.metadata.WatchHardwarePlatform
 import io.rebble.libpebblecommon.music.MusicAction
 import io.rebble.libpebblecommon.music.PlaybackState
 import io.rebble.libpebblecommon.music.RepeatType
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.protocolhelpers.PebblePacket
 import io.rebble.libpebblecommon.services.WatchInfo
@@ -118,7 +119,8 @@ sealed interface ConnectedPebbleDevice :
     ConnectedPebble.CompanionAppControl,
     ConnectedPebble.Screenshot,
     ConnectedPebble.Language,
-    ConnectedPebble.Health
+    ConnectedPebble.Health,
+    ConnectedPebble.Drew
 
 /**
  * Put all specific functionality here, rather than directly in [ConnectedPebbleDevice].
@@ -241,6 +243,11 @@ object ConnectedPebble {
         suspend fun requestHealthData(fullSync: Boolean): Boolean
     }
 
+    interface Drew {
+        /** The DrewPebbleOS features both the watch and this phone announce; none for other firmware. */
+        val drewFeatures: StateFlow<DrewFeatures>
+    }
+
     class Services(
         val debug: Debug,
         val appRunState: AppRunState,
@@ -257,6 +264,7 @@ object ConnectedPebble {
         val screenshot: Screenshot,
         val language: LanguageInstall,
         val health: Health,
+        val drew: Drew,
     )
 
     class PrfServices(

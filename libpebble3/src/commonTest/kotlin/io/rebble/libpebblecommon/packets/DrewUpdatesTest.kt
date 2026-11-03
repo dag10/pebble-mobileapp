@@ -13,25 +13,23 @@ import kotlin.test.assertTrue
 internal class DrewUpdatesTest {
     private fun bytes(vararg values: Int) = values.map { it.toUByte() }
 
+    private fun header(command: Int) = drewBytes("44 52 45 57 01 01").toList() + command.toUByte()
+
     private fun ascii(text: String) = text.encodeToByteArray().map { it.toUByte() }
 
     @Test
     fun deserializeListRequest() {
-        val packet = PebblePacket.deserialize(
-            ubyteArrayOf(0x00u, 0x02u, 0xDEu, 0x01u, 0x01u, 0x01u)
-        )
+        val packet = PebblePacket.deserialize(drewPacket("44 52 45 57 01 01 01 | 01"))
         assertTrue(assertIs<DrewUpdatesMessage.ListRequest>(packet).recheck)
 
-        val cachedOnly = PebblePacket.deserialize(
-            ubyteArrayOf(0x00u, 0x02u, 0xDEu, 0x01u, 0x01u, 0x00u)
-        )
+        val cachedOnly = PebblePacket.deserialize(drewPacket("44 52 45 57 01 01 01 | 00"))
         assertFalse(assertIs<DrewUpdatesMessage.ListRequest>(cachedOnly).recheck)
     }
 
     @Test
     fun deserializeInstallRequest() {
         val packet = PebblePacket.deserialize(
-            (bytes(0x00, 0x09, 0xDE, 0x01, 0x02, 0x07) + ascii("fw:drew")).toUByteArray()
+            (bytes(0x00, 0x0F, 0xDE, 0x01) + header(0x02) + bytes(0x07) + ascii("fw:drew")).toUByteArray()
         )
         assertEquals("fw:drew", assertIs<DrewUpdatesMessage.InstallRequest>(packet).id.get())
     }
@@ -46,9 +44,7 @@ internal class DrewUpdatesTest {
             message = "hi",
         )
         assertEquals(
-            bytes(
-                0x00, 0x0C, 0xDE, 0x01, // length 12, endpoint
-                0x81, // command
+            bytes(0x00, 0x12, 0xDE, 0x01) + header(0x81) + bytes(
                 0x02, 0x01, // list id, little-endian
                 0x01, // status: checking
                 0x02, // entry count
@@ -73,8 +69,7 @@ internal class DrewUpdatesTest {
             newVersion = "1.9",
             changelog = "• x",
         )
-        val payload = bytes(
-            0x82,
+        val payload = header(0x82) + bytes(
             0x07, 0x00, // list id
             0x01, // index
             0x01, // kind: watchface
@@ -96,7 +91,7 @@ internal class DrewUpdatesTest {
             percent = 42u,
         )
         assertEquals(
-            bytes(0x00, 0x0C, 0xDE, 0x01, 0x83, 0x07) + ascii("fw:drew") + bytes(0x02, 42, 0x00),
+            drewPacket("44 52 45 57 01 01 83 | 07 66 77 3a 64 72 65 77 02 2a 00").toList(),
             packet.serialize().toList(),
         )
     }
@@ -113,7 +108,8 @@ internal class DrewUpdatesTest {
             newVersion = "v4.41.2-drew.1",
             changelog = "line\n".repeat(200),
         )
-        val decoded = assertIs<DrewUpdatesMessage.ListEntry>(PebblePacket.deserialize(packet.serialize()))
+        val decoded = DrewUpdatesMessage.ListEntry()
+        PebblePacket.deserialize(packet.serialize().drop(4).toUByteArray(), decoded)
         assertEquals("v4.41.2-drew.1", decoded.newVersion.get())
         assertEquals(DrewUpdatesMessage.MAX_CHANGELOG_BYTES, decoded.changelog.get().encodeToByteArray().size)
     }

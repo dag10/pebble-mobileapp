@@ -1,8 +1,5 @@
 package io.rebble.libpebblecommon.packets
 
-import io.rebble.libpebblecommon.protocolhelpers.PacketRegistry
-import io.rebble.libpebblecommon.protocolhelpers.PebblePacket
-import io.rebble.libpebblecommon.protocolhelpers.ProtocolEndpoint
 import io.rebble.libpebblecommon.structmapper.SLongString
 import io.rebble.libpebblecommon.structmapper.SString
 import io.rebble.libpebblecommon.structmapper.SUByte
@@ -12,8 +9,8 @@ import io.rebble.libpebblecommon.util.Endian
 
 /**
  * DrewPebbleOS only: the watch's Settings > Updates page lists the updates the phone knows about
- * and asks it to install one. The phone talks only to DrewPebbleOS and only ever answers a watch
- * request.
+ * and asks it to install one. The phone only ever answers a watch request. Service
+ * [DrewService.Updates] of the Drew protocol; the command is the frame's.
  * Multi-byte fields are little-endian. Strings are UTF-8 with a length prefix and no NUL: one byte
  * for [SString], two for the changelog. The spec is in pebble-workspace's docs/drew-os-extensions.md
  * ("Watch Updates protocol").
@@ -21,7 +18,7 @@ import io.rebble.libpebblecommon.util.Endian
 // TODO(DrewOS extension protocol): the phone announces no Drew Updates support until the Drew hello
 // replaces capability bit 28, which is upstream's SupportsMultipleLanguagePacks, so DrewPebbleOS's
 // Settings > Updates says the phone doesn't support it until then.
-open class DrewUpdatesMessage(message: Message) : PebblePacket(endpoint) {
+open class DrewUpdatesMessage(message: Message) : DrewMessage(DrewService.Updates, message.value) {
     enum class Message(val value: UByte) {
         /** Watch -> phone: send the update list (and re-check if [ListRequest.FLAG_RECHECK]). */
         ListRequest(0x01u),
@@ -33,12 +30,6 @@ open class DrewUpdatesMessage(message: Message) : PebblePacket(endpoint) {
         ListEntry(0x82u),
         /** Phone -> watch: how an install the watch asked for is going. */
         InstallStatus(0x83u),
-    }
-
-    val command = SUByte(m, message.value)
-
-    init {
-        type = command.get()
     }
 
     class ListRequest(flags: UByte = 0u) : DrewUpdatesMessage(Message.ListRequest) {
@@ -154,8 +145,6 @@ open class DrewUpdatesMessage(message: Message) : PebblePacket(endpoint) {
     }
 
     companion object {
-        val endpoint = ProtocolEndpoint.DREW_UPDATES
-
         const val MAX_ID_BYTES = 48
         const val MAX_NAME_BYTES = 32
         const val MAX_VERSION_BYTES = 32
@@ -176,22 +165,4 @@ fun String.utf8Prefix(maxBytes: Int): String {
         end--
     }
     return bytes.decodeToString(0, end)
-}
-
-fun drewUpdatesPacketsRegister() {
-    PacketRegistry.register(DrewUpdatesMessage.endpoint, DrewUpdatesMessage.Message.ListRequest.value) {
-        DrewUpdatesMessage.ListRequest()
-    }
-    PacketRegistry.register(DrewUpdatesMessage.endpoint, DrewUpdatesMessage.Message.InstallRequest.value) {
-        DrewUpdatesMessage.InstallRequest()
-    }
-    PacketRegistry.register(DrewUpdatesMessage.endpoint, DrewUpdatesMessage.Message.ListHeader.value) {
-        DrewUpdatesMessage.ListHeader()
-    }
-    PacketRegistry.register(DrewUpdatesMessage.endpoint, DrewUpdatesMessage.Message.ListEntry.value) {
-        DrewUpdatesMessage.ListEntry()
-    }
-    PacketRegistry.register(DrewUpdatesMessage.endpoint, DrewUpdatesMessage.Message.InstallStatus.value) {
-        DrewUpdatesMessage.InstallStatus()
-    }
 }

@@ -4,6 +4,7 @@ import androidx.room.Upsert
 import coredev.BlobDatabase
 import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.metadata.WatchType
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.packets.blobdb.BlobResponse
 import io.rebble.libpebblecommon.services.FirmwareVersion
@@ -52,6 +53,8 @@ data class ValueParams(
     val vibePatternDao: VibePatternDao? = null,
     val notificationRuleDao: NotificationRuleDao? = null,
     val libPebbleConfigFlow: LibPebbleConfigFlow,
+    /** Read when encoding: the watch's hello can arrive after the connection's BlobDB starts. */
+    val drewFeatures: () -> DrewFeatures = { DrewFeatures.None },
 )
 
 interface BlobDbItem {
