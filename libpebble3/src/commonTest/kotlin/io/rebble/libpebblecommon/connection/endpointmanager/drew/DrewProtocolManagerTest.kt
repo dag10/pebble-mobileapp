@@ -59,6 +59,11 @@ class DrewProtocolManagerTest {
     }
 
     @Test
+    fun announcesWhatThePhoneImplements() {
+        assertEquals(DrewFeatures.of(DrewFeature.Updates), localDrewFeatures(LibPebbleConfig()))
+    }
+
+    @Test
     fun answersAHelloThatAsksForOne() = runTest {
         val manager = manager()
         assertEquals(DrewFeatures.None, manager.watchFeatures.value)
