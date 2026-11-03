@@ -382,8 +382,6 @@ enum class ProtocolCapsFlag(val value: Int) {
     SupportsNotificationWindowState(26),
     SupportsAppPermissions(27),
     SupportsMultipleLanguagePacks(28),
-    // DrewPebbleOS only, announced by the watch: shows TimelineAttribute.DrewNotificationFlags.
-    SupportsDrewNotificationFlags(31),
     ;
 
     companion object {
