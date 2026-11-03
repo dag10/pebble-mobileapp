@@ -11,6 +11,7 @@ import io.rebble.libpebblecommon.connection.FirmwareUpdateCheckResult
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.connection.PebbleIdentifier
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater.FirmwareUpdateStatus
+import io.rebble.libpebblecommon.services.isDrewPebbleOs
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -19,7 +20,7 @@ import kotlin.time.Duration.Companion.hours
 interface FirmwareUpdateUiTracker {
     fun didFirmwareUpdateCheckFromUi()
     fun shouldUiUpdateCheck(): Boolean
-    fun onConnectedWatch(watch: CommonConnectedDevice)
+    fun onConnectedWatch(watch: CommonConnectedDevice, offerVanillaUpdate: Boolean = true)
     fun updateWatchNow(libPebble: LibPebble, identifier: String)
 }
 
@@ -49,7 +50,7 @@ class RealFirmwareUpdateUiTracker(
         return shouldCheck
     }
 
-    override fun onConnectedWatch(watch: CommonConnectedDevice) {
+    override fun onConnectedWatch(watch: CommonConnectedDevice, offerVanillaUpdate: Boolean) {
         if (watch.firmwareUpdateState is FirmwareUpdateStatus.InProgress) {
             logger.d { "Firmware update in progress; removing notification" }
             removeNotification(watch.identifier.asString)
@@ -65,16 +66,19 @@ class RealFirmwareUpdateUiTracker(
                 showUpdateAction = false,
             )
         }
-        if (watch.watchInfo.runningFwVersion.suffix?.isNotEmpty() == true) {
+        val runningDrewPebbleOs = watch.watchInfo.runningFwVersion.isDrewPebbleOs()
+        if (watch.watchInfo.runningFwVersion.suffix?.isNotEmpty() == true && !runningDrewPebbleOs) {
             logger.d { "Not doing notification of auto-update because watch is running custom build" }
             return
         }
         val update = watch.firmwareUpdateAvailable.result as? FirmwareUpdateCheckResult.FoundUpdate ?: return
+        if (!offerVanillaUpdate) return
         val key = update.hashCode() + watch.identifier.asString.hashCode()
         val config = coreConfigFlow.value
         val now = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
         // Recovery mode is left to the user.
         if (config.autoFirmwareUpdate &&
+            !runningDrewPebbleOs &&
             watch is ConnectedPebbleDevice &&
             config.autoFirmwareUpdateWindow?.contains(now) != false &&
             watch.firmwareUpdateState is FirmwareUpdateStatus.NotInProgress &&

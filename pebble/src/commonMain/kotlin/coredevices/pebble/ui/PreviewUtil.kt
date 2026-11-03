@@ -137,7 +137,7 @@ private fun fakePebbleModule(appContext: AppContext) = module {
     val firmwareUpdateUiTracker = object : FirmwareUpdateUiTracker {
         override fun didFirmwareUpdateCheckFromUi() {}
         override fun shouldUiUpdateCheck(): Boolean = false
-        override fun onConnectedWatch(watch: CommonConnectedDevice) {}
+        override fun onConnectedWatch(watch: CommonConnectedDevice, offerVanillaUpdate: Boolean) {}
         override fun updateWatchNow(
             libPebble: LibPebble,
             identifier: String

@@ -32,6 +32,9 @@ class DrewPebbleOsUpdateCheck(
         return drewPebbleOsUpdate(release, watch.platform.revision, watch.runningFwVersion)
     }
 
+    suspend fun shouldNotifyVanillaUpdate(update: FirmwareVersion, running: FirmwareVersion): Boolean =
+        isVanillaUpdateNewerThanDrew(update, running, latestRelease(force = false)?.tagName)
+
     private suspend fun latestRelease(force: Boolean): GitHubRelease? = mutex.withLock {
         val now = clock.now()
         cached?.takeIf { !force && it.second > now }?.let { return it.first }
@@ -48,6 +51,33 @@ class DrewPebbleOsUpdateCheck(
         private const val LATEST_RELEASE_URL = "https://api.github.com/repos/dag10/PebbleOS/releases/latest"
         private val CACHE_TTL: Duration = 15.minutes
     }
+}
+
+/**
+ * True when official [update] is a higher release than the newest DrewPebbleOS, whether running or
+ * the latest release; always true with no DrewPebbleOS known.
+ */
+fun isVanillaUpdateNewerThanDrew(
+    update: FirmwareVersion,
+    running: FirmwareVersion,
+    latestReleaseTag: String?,
+): Boolean {
+    val drewVersions = listOfNotNull(
+        running.takeIf { drewBuildNumber(it.stringVersion) != null },
+        latestReleaseTag?.takeIf { drewBuildNumber(it) != null }?.let { tag ->
+            FirmwareVersion.from(
+                tag = tag,
+                isRecovery = false,
+                gitHash = "",
+                timestamp = Instant.DISTANT_PAST,
+                isDualSlot = false,
+                isSlot0 = false,
+            )
+        },
+    )
+    val releaseOrder = compareBy<FirmwareVersion>({ it.major }, { it.minor }, { it.patch })
+    val newestDrew = drewVersions.maxWithOrNull(releaseOrder) ?: return true
+    return releaseOrder.compare(update, newestDrew) > 0
 }
 
 fun drewPebbleOsAssetName(platformRevision: String, tag: String): String =
