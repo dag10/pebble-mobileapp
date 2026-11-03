@@ -9,6 +9,7 @@ import coredevices.database.WeatherLocationDao
 import coredevices.database.insertDefaultWeatherLocationOnce
 import coredevices.firestore.UsersDao
 import coredevices.pebble.firmware.BatteryChargedNotifier
+import coredevices.pebble.firmware.DrewPebbleOsUpdateCheck
 import coredevices.pebble.firmware.FirmwareUpdateUiTracker
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.BundledAppMigration
@@ -31,6 +32,7 @@ import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDevice
 import io.rebble.libpebblecommon.connection.ConnectedPebbleDeviceInRecovery
 import io.rebble.libpebblecommon.connection.ConnectingPebbleDevice
+import io.rebble.libpebblecommon.connection.FirmwareUpdateCheckResult
 import io.rebble.libpebblecommon.connection.KnownPebbleDevice
 import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.connection.PebbleDevice
@@ -155,8 +157,11 @@ class PebbleAppDelegate(
                     }
                 }
                 combine(libPebble.watches, ticks) { watches, _ -> watches }.collect { watches ->
-                    watches.filterIsInstance<CommonConnectedDevice>().forEach {
-                        firmwareUpdateUiTracker.onConnectedWatch(it)
+                    watches.filterIsInstance<CommonConnectedDevice>().forEach { watch ->
+                        val fwup = watch.firmwareUpdateAvailable.result as? FirmwareUpdateCheckResult.FoundUpdate
+                        val offerVanillaUpdate = fwup == null || KoinPlatform.getKoin().get<DrewPebbleOsUpdateCheck>()
+                            .shouldNotifyVanillaUpdate(fwup.version, watch.watchInfo.runningFwVersion)
+                        firmwareUpdateUiTracker.onConnectedWatch(watch, offerVanillaUpdate)
                     }
                 }
             }

@@ -5,8 +5,10 @@ import io.rebble.libpebblecommon.services.FirmwareVersion
 import io.rebble.libpebblecommon.services.drewBuildNumber
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 class DrewPebbleOsTest {
@@ -76,5 +78,31 @@ class DrewPebbleOsTest {
     @Test
     fun doesNotOfferWithoutBuildForPlatform() {
         assertEquals(FirmwareUpdateCheckResult.FoundNoUpdate, check("v4.41.1", platform = "snowy_dvt"))
+    }
+
+    @Test
+    fun vanillaUpdateNotNewerThanRunningDrewIsQuiet() {
+        assertFalse(isVanillaUpdateNewerThanDrew(running("v4.41.2"), running("v4.41.2-drew.0"), null))
+        assertFalse(isVanillaUpdateNewerThanDrew(running("v4.41.1"), running("v4.41.2-drew.0"), null))
+    }
+
+    @Test
+    fun vanillaUpdateNotNewerThanLatestDrewReleaseIsQuiet() {
+        assertFalse(isVanillaUpdateNewerThanDrew(running("v4.41.2"), running("v4.41.1-drew.5"), "v4.41.2-drew.0"))
+    }
+
+    @Test
+    fun vanillaUpdateNewerThanAllDrewNotifies() {
+        assertTrue(isVanillaUpdateNewerThanDrew(running("v4.42.0"), running("v4.41.2-drew.0"), "v4.41.2-drew.0"))
+    }
+
+    @Test
+    fun nonDrewLatestReleaseIsIgnored() {
+        assertTrue(isVanillaUpdateNewerThanDrew(running("v4.41.2"), running("v4.41.1-drew.5"), "v4.41.2"))
+    }
+
+    @Test
+    fun noDrewKnownNotifies() {
+        assertTrue(isVanillaUpdateNewerThanDrew(running("v4.41.2"), running("v4.41.1"), null))
     }
 }
