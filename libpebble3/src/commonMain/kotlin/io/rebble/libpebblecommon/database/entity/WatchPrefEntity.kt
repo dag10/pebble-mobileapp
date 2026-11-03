@@ -14,10 +14,10 @@ import io.rebble.libpebblecommon.database.dao.ValueParams
 import io.rebble.libpebblecommon.database.dao.WatchPreference
 import io.rebble.libpebblecommon.database.entity.QuickLaunchSetting.Companion.toJson
 import io.rebble.libpebblecommon.metadata.WatchType
+import io.rebble.libpebblecommon.packets.DrewFeature
 import io.rebble.libpebblecommon.packets.blobdb.TimelineAttribute
 import io.rebble.libpebblecommon.packets.blobdb.TimelineItem.Attribute
 import io.rebble.libpebblecommon.services.blobdb.DbWrite
-import io.rebble.libpebblecommon.services.isDrewPebbleOs
 import io.rebble.libpebblecommon.structmapper.SBoolean
 import io.rebble.libpebblecommon.structmapper.SFixedList
 import io.rebble.libpebblecommon.structmapper.SFixedString
@@ -71,8 +71,8 @@ data class WatchPrefItem(
             logger.w { "Don't know how to encode watch pref key: $id" }
             return null
         }
-        if (type.drewPebbleOsOnly && !params.firmwareVersion.isDrewPebbleOs()) {
-            logger.v { "Not sending DrewPebbleOS-only watch pref $id to other firmware" }
+        if (type.drewPebbleOsOnly && DrewFeature.Prefs !in params.drewFeatures()) {
+            logger.v { "Not sending DrewPebbleOS-only watch pref $id to a watch without the Drew Prefs feature" }
             return null
         }
         logger.v { "trying to insert watch pref to watch blobdb: $id / $value" }
@@ -241,7 +241,7 @@ sealed interface WatchPref<T> {
     fun encodeValue(value: T): String
     fun castParent(parent: WatchPreference<*>): WatchPreference<T> = parent as WatchPreference<T>
     val isDebugSetting: Boolean
-    /** Only DrewPebbleOS accepts this pref; other firmware is never sent it. */
+    /** Only DrewPebbleOS accepts this pref, so only watches with [DrewFeature.Prefs] are sent it. */
     val drewPebbleOsOnly: Boolean get() = false
     /** Phone-owned state synced to the watch, never shown as a setting. */
     val isInternal: Boolean get() = false
