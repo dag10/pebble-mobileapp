@@ -1,5 +1,6 @@
 package coredevices.pebble
 
+import CoreAppVersion
 import co.touchlab.kermit.Logger
 import com.algolia.client.api.SearchClient
 import com.viktormykhailiv.kmp.health.HealthManagerFactory
@@ -27,6 +28,7 @@ import coredevices.pebble.firmware.RealBatteryChargedNotifier
 import coredevices.pebble.firmware.RealFirmwareUpdateUiTracker
 import coredevices.pebble.firmware.postWatchFullyChargedNotification
 import io.rebble.libpebblecommon.connection.endpointmanager.audio.SpeexAudioFrameDecoder
+import io.rebble.libpebblecommon.connection.endpointmanager.drew.DrewPhoneBuild
 import coredevices.pebble.services.AppstoreCache
 import coredevices.pebble.services.AppstoreService
 import coredevices.pebble.services.AppstoreSourceInitializer
@@ -144,6 +146,7 @@ val watchModule = module {
             get(),
             get(),
             get(),
+            drewPhoneBuild = DrewPhoneBuild(get<CoreAppVersion>().drewBuildVersion()),
         )
     } binds arrayOf(LibPebble3::class, NotificationApps::class, SystemGeolocation::class)
 

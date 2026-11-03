@@ -55,6 +55,7 @@ import io.rebble.libpebblecommon.music.PlaybackState
 import io.rebble.libpebblecommon.music.RepeatType
 import io.rebble.libpebblecommon.notification.NotificationDecision
 import io.rebble.libpebblecommon.notification.VibePattern
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.permissions.PluginDefinedPermission
 import io.rebble.libpebblecommon.plugin.ActionResult
@@ -752,6 +753,7 @@ class FakeConnectedDevice(
 
     override val runningApp: StateFlow<Uuid?> = MutableStateFlow(null)
     override val previousApp: StateFlow<Uuid?> = MutableStateFlow(null)
+    override val drewFeatures: StateFlow<DrewFeatures> = MutableStateFlow(DrewFeatures.None)
     override val watchInfo: WatchInfo = WatchInfo(
         runningFwVersion = FirmwareVersion.from(
             runningFwVersion,
