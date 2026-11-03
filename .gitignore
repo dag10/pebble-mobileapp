@@ -17,3 +17,9 @@ iosApp/iosApp.xcodeproj/xcuserdata
 iosApp/iosApp.xcworkspace/xcuserdata
 iosApp/iosApp/GoogleService-Info.plist
 
+
+# DrewMobileApp: private watch app pbws that the workspace's scripts/mobileapp_bundle_apps.py
+# copies in before a build; never checked in
+androidApp/src/main/assets/bundled-apps/
+iosApp/bundled-apps/*
+!iosApp/bundled-apps/.gitkeep

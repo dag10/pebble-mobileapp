@@ -32,7 +32,9 @@ import coredevices.pebble.services.AppstoreService
 import coredevices.pebble.services.AppstoreSourceInitializer
 import coredevices.pebble.services.BundledAppMigration
 import coredevices.pebble.services.DrewAppUpdates
+import coredevices.pebble.services.DrewBundledApps
 import coredevices.pebble.services.DrewWatchUpdates
+import coredevices.pebble.services.confirmedUuids
 import coredevices.pebble.services.EngDashOta
 import coredevices.pebble.services.HybridTranscription
 import coredevices.pebble.services.LanguagePackRepository
@@ -95,6 +97,7 @@ import io.rebble.libpebblecommon.connection.LibPebble3
 import io.rebble.libpebblecommon.connection.NotificationApps
 import io.rebble.libpebblecommon.connection.Plugins
 import io.rebble.libpebblecommon.plugin.PluginOAuthApi
+import io.rebble.libpebblecommon.drew.readDrewBundledApp
 import io.rebble.libpebblecommon.connection.TokenProvider
 import io.rebble.libpebblecommon.connection.Weather
 import io.rebble.libpebblecommon.connection.WebServices
@@ -103,6 +106,7 @@ import io.rebble.libpebblecommon.js.InjectedPKJSHttpInterceptors
 import io.rebble.libpebblecommon.permissions.PermissionDecisionRecord
 import io.rebble.libpebblecommon.util.SystemGeolocation
 import io.rebble.libpebblecommon.connection.endpointmanager.audio.AudioFrameDecoder
+import io.rebble.libpebblecommon.util.getTempFilePath
 import io.rebble.libpebblecommon.voice.TranscriptionProvider
 import io.rebble.libpebblecommon.web.LockerEntry
 import kotlinx.coroutines.GlobalScope
@@ -237,6 +241,17 @@ val watchModule = module {
     singleOf(::FirmwareUpdateCheck)
     singleOf(::DrewPebbleOsUpdateCheck)
     single { DrewAppUpdates(json = get(), libPebble = get(), appContext = get(), clock = get()) }
+    single {
+        val appContext: AppContext = get()
+        val firestoreLocker: FirestoreLocker = get()
+        DrewBundledApps(
+            libPebble = get(),
+            settings = get(),
+            storeLockerUuids = { firestoreLocker.confirmedUuids() },
+            readBundled = { readDrewBundledApp(appContext, it) },
+            tempPath = { getTempFilePath(appContext, it) },
+        )
+    }
     single {
         DrewWatchUpdates(
             libPebble = get(),
