@@ -325,8 +325,10 @@ enum class TimelineAttribute(val id: UByte, val maxLength: Int = -1) {
     /** Kind of weather pin, so the watch can show a translated title: 1 = sunrise, 2 = sunset. */
     WeatherPinKind(0x35u),
 
-    /** DrewPebbleOS: critical, discreet and break-through-Quiet-Time bits of a notification. */
-    DrewNotificationFlags(0x3Fu),
+    // 0xD0-0xDF: DrewPebbleOS only, far from upstream's sequence.
+
+    /** Critical, discreet and break-through-Quiet-Time bits of a notification. */
+    DrewNotificationFlags(0xD0u),
     ;
 
     companion object {
