@@ -4,6 +4,8 @@ import io.rebble.libpebblecommon.LibPebbleConfig
 import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.database.dao.ValueParams
 import io.rebble.libpebblecommon.metadata.WatchType
+import io.rebble.libpebblecommon.packets.DrewFeature
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.packets.blobdb.TimelineAttribute
 import io.rebble.libpebblecommon.packets.blobdb.TimelineIcon
@@ -31,11 +33,9 @@ class DrewNotificationFlagsTest {
         isSlot0 = true,
     )
 
-    private val drewWatch = setOf(
-        ProtocolCapsFlag.SupportsUnknownTimelineAttributes,
-        ProtocolCapsFlag.SupportsDrewNotificationFlags,
-    )
-    private val stockWatch = setOf(ProtocolCapsFlag.SupportsUnknownTimelineAttributes)
+    private val capabilities = setOf(ProtocolCapsFlag.SupportsUnknownTimelineAttributes)
+    private val drewWatch = DrewFeatures.of(DrewFeature.NotificationFlags)
+    private val stockWatch = DrewFeatures.None
 
     private fun notification(flags: DrewNotificationFlags) = buildTimelineNotification(
         parentId = Uuid.NIL,
@@ -52,13 +52,14 @@ class DrewNotificationFlagsTest {
 
     private fun sentAttributes(
         item: TimelineNotification,
-        capabilities: Set<ProtocolCapsFlag>,
+        drewFeatures: DrewFeatures,
     ): Map<UByte, UByteArray> {
         val params = ValueParams(
             platform = WatchType.EMERY,
             capabilities = capabilities,
             firmwareVersion = firmware,
             libPebbleConfigFlow = LibPebbleConfigFlow(MutableStateFlow(LibPebbleConfig())),
+            drewFeatures = { drewFeatures },
         )
         val decoded = TimelineItem()
         decoded.fromBytes(DataBuffer(item.value(params)!!))
@@ -77,6 +78,13 @@ class DrewNotificationFlagsTest {
         assertEquals(0x04u.toUByte(), DrewNotificationFlags(breakThroughQuietTime = true).toUByte())
         assertEquals(all, DrewNotificationFlags.fromUByte(0x07u))
         assertEquals(DrewNotificationFlags(), DrewNotificationFlags.fromUByte(0u))
+    }
+
+    @Test
+    fun flagsAreAttribute0xD0() {
+        assertEquals(0xD0u.toUByte(), TimelineAttribute.DrewNotificationFlags.id)
+        val sent = sentAttributes(notification(DrewNotificationFlags(breakThroughQuietTime = true)), drewWatch)
+        assertEquals(listOf(0x04u.toUByte()), sent[0xD0u]?.toList())
     }
 
     @Test

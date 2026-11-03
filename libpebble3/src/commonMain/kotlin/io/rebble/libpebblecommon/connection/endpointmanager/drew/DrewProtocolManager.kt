@@ -34,6 +34,7 @@ internal fun localDrewFeatures(config: LibPebbleConfig): DrewFeatures = DrewFeat
         DrewFeature.Updates,
         DrewFeature.Heartbeat.takeIf { config.bleConfig.drewHeartbeat },
         DrewFeature.FindPhone,
+        DrewFeature.NotificationFlags,
     )
 )
 

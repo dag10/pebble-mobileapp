@@ -7,6 +7,7 @@ import io.rebble.libpebblecommon.database.MillisecondDuration
 import io.rebble.libpebblecommon.database.MillisecondInstant
 import io.rebble.libpebblecommon.database.dao.BlobDbItem
 import io.rebble.libpebblecommon.database.dao.ValueParams
+import io.rebble.libpebblecommon.packets.DrewFeature
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.packets.blobdb.TimelineAttribute
 import io.rebble.libpebblecommon.packets.blobdb.TimelineIcon
@@ -181,7 +182,12 @@ private val TimelineAttribute.requiredCapability: ProtocolCapsFlag?
         TimelineAttribute.VibrationPattern -> ProtocolCapsFlag.SupportsCustomVibePatterns
         TimelineAttribute.ImageAspectRatio -> ProtocolCapsFlag.SupportsNotificationImages
         TimelineAttribute.WeatherPinKind -> ProtocolCapsFlag.SupportsUnknownTimelineAttributes
-        TimelineAttribute.DrewNotificationFlags -> ProtocolCapsFlag.SupportsDrewNotificationFlags
+        else -> null
+    }
+
+private val TimelineAttribute.requiredDrewFeature: DrewFeature?
+    get() = when (this) {
+        TimelineAttribute.DrewNotificationFlags -> DrewFeature.NotificationFlags
         else -> null
     }
 
@@ -197,6 +203,7 @@ interface DbTimelineItem : BlobDbItem {
             .hashCode()
     override fun key(): UByteArray = SUUID(StructMapper(), itemId).toBytes()
     override fun value(params: ValueParams): UByteArray? {
+        val drewFeatures = params.drewFeatures()
         val item = TimelineItem(
             itemId = itemId,
             parentId = content.parentId,
@@ -206,9 +213,10 @@ interface DbTimelineItem : BlobDbItem {
             flags = TimelineItem.Flag.makeFlags(content.flags),
             layout = content.layout,
             attributes = content.attributes
-                .withDiscreetFallback(params.capabilities)
+                .withDiscreetFallback(drewFeatures)
                 .filterNot { attr ->
-                    attr.attribute.requiredCapability?.let { it !in params.capabilities } == true
+                    attr.attribute.requiredCapability?.let { it !in params.capabilities } == true ||
+                        attr.attribute.requiredDrewFeature?.let { it !in drewFeatures } == true
                 }.map { it.asAttribute() },
             actions = content.actions.map { it.asAction() },
         )

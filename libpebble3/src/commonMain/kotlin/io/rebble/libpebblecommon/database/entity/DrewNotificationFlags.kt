@@ -1,6 +1,7 @@
 package io.rebble.libpebblecommon.database.entity
 
-import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
+import io.rebble.libpebblecommon.packets.DrewFeature
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.blobdb.TimelineAttribute
 
 /** DrewPebbleOS notification options, sent as [TimelineAttribute.DrewNotificationFlags]. */
@@ -55,13 +56,11 @@ private val DISCREET_CONTENT_ATTRIBUTES = setOf(
 )
 
 /**
- * A watch without [ProtocolCapsFlag.SupportsDrewNotificationFlags] can't hide a discreet
- * notification, so it gets placeholder content instead.
+ * A watch without [DrewFeature.NotificationFlags] can't hide a discreet notification, so it gets
+ * placeholder content instead.
  */
-internal fun List<BaseAttribute>.withDiscreetFallback(
-    capabilities: Set<ProtocolCapsFlag>,
-): List<BaseAttribute> {
-    if (ProtocolCapsFlag.SupportsDrewNotificationFlags in capabilities) return this
+internal fun List<BaseAttribute>.withDiscreetFallback(drewFeatures: DrewFeatures): List<BaseAttribute> {
+    if (DrewFeature.NotificationFlags in drewFeatures) return this
     val flags = filterIsInstance<BaseAttribute.UByteAttribute>()
         .firstOrNull { it.attribute == TimelineAttribute.DrewNotificationFlags }
         ?.let { DrewNotificationFlags.fromUByte(it.value) }
