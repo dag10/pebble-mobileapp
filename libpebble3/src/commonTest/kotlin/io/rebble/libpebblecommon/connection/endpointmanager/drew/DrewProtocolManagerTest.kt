@@ -60,7 +60,10 @@ class DrewProtocolManagerTest {
 
     @Test
     fun announcesWhatThePhoneImplements() {
-        assertEquals(DrewFeatures.of(DrewFeature.Updates), localDrewFeatures(LibPebbleConfig()))
+        assertEquals(
+            DrewFeatures.of(DrewFeature.Updates, DrewFeature.FindPhone),
+            localDrewFeatures(LibPebbleConfig()),
+        )
     }
 
     @Test

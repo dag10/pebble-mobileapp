@@ -56,6 +56,13 @@ internal class DrewProtocolTest {
     }
 
     @Test
+    fun pingPhoneExamples() {
+        assertIs<DrewFindPhone.Start>(PebblePacket.deserialize(drewPacket("44 52 45 57 01 02 01")))
+        assertIs<DrewFindPhone.Stop>(PebblePacket.deserialize(drewPacket("44 52 45 57 01 02 02")))
+        assertEquals(drewPacket("44 52 45 57 01 02 01").toList(), DrewFindPhone.Start().serialize().toList())
+    }
+
+    @Test
     fun trailingBytesAreIgnored() {
         val heartbeat = PebblePacket.deserialize(drewPacket("44 52 45 57 01 00 02 | 07 00 00 00 aa bb"))
         assertEquals(7u, assertIs<DrewHeartbeat>(heartbeat).cookie.get())
