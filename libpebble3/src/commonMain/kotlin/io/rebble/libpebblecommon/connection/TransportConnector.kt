@@ -17,6 +17,7 @@ import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater
 import io.rebble.libpebblecommon.connection.endpointmanager.RealLanguagePackInstaller
 import io.rebble.libpebblecommon.connection.endpointmanager.audio.VoiceSessionManager
 import io.rebble.libpebblecommon.connection.endpointmanager.blobdb.BlobDB
+import io.rebble.libpebblecommon.connection.endpointmanager.drew.DrewProtocolManager
 import io.rebble.libpebblecommon.connection.endpointmanager.musiccontrol.MusicControlManager
 import io.rebble.libpebblecommon.connection.endpointmanager.phonecontrol.PhoneControlManager
 import io.rebble.libpebblecommon.connection.endpointmanager.timeline.TimelineActionManager
@@ -171,6 +172,7 @@ class RealPebbleConnector(
     private val languagePackInstaller: RealLanguagePackInstaller,
     private val healthService: HealthService,
     private val notificationImageProvider: NotificationImageProvider,
+    private val drewProtocolManager: DrewProtocolManager,
 ) : PebbleConnector {
     private val logger = Logger.withTag("PebbleConnector-$identifier")
     private val _state = MutableStateFlow<ConnectingPebbleState>(Inactive(identifier))
@@ -216,6 +218,7 @@ class RealPebbleConnector(
         }
 
         systemService.init()
+        drewProtocolManager.init()
         appRunStateService.init()
         dataLoggingService.initialInit()
         // Allow the service to buffer up writeback sync messages
@@ -278,12 +281,14 @@ class RealPebbleConnector(
         }
         val previouslyConnected = knownWatchProperties?.lastConnected != null
 
+        drewProtocolManager.awaitWatchHello(watchInfo.runningFwVersion)
         blobDB.init(
             watchType = watchInfo.platform.watchType,
             unfaithful = watchInfo.isUnfaithful,
             previouslyConnected = previouslyConnected,
             capabilities = watchInfo.capabilities,
             firmwareVersion = watchInfo.runningFwVersion,
+            drewFeatures = { drewProtocolManager.drewFeatures.value },
         )
         appFetchService.init()
         timelineActionManager.init()
@@ -318,6 +323,7 @@ class RealPebbleConnector(
                 screenshot = screenshotService,
                 language = languagePackInstaller,
                 health = healthService,
+                drew = drewProtocolManager,
             ),
             reversePpogVersion = reversePpogVersion,
         )

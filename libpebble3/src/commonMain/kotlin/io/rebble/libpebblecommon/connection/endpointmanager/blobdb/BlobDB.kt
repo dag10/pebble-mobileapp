@@ -27,6 +27,7 @@ import io.rebble.libpebblecommon.database.entity.HealthStatDao
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
 import io.rebble.libpebblecommon.di.PlatformConfig
 import io.rebble.libpebblecommon.metadata.WatchType
+import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.ProtocolCapsFlag
 import io.rebble.libpebblecommon.packets.blobdb.BlobCommand
 import io.rebble.libpebblecommon.packets.blobdb.BlobDB2Command
@@ -176,6 +177,7 @@ class BlobDB(
         previouslyConnected: Boolean,
         capabilities: Set<ProtocolCapsFlag>,
         firmwareVersion: FirmwareVersion,
+        drewFeatures: () -> DrewFeatures,
     ) {
         // Captured before the watch is marked connected, so that items added from then on are sent.
         val insertOnlyAfter = timeProvider.now()
@@ -186,6 +188,7 @@ class BlobDB(
             vibePatternDao = blobDatabases.getVibePatternDao(),
             notificationRuleDao = blobDatabases.getNotificationRuleDao(),
             libPebbleConfigFlow = libPebbleConfigFlow,
+            drewFeatures = drewFeatures,
         )
         val deviceHasPreviouslySyncedSettings =
             loadDevicePreviousSettingsSyncState().identifiers.contains(identifier.asString)

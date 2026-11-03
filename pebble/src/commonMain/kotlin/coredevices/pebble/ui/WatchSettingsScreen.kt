@@ -136,6 +136,7 @@ import coredevices.pebble.PebbleFeatures
 import coredevices.pebble.Platform
 import coredevices.pebble.account.BootConfigProvider
 import coredevices.pebble.account.PebbleAccount
+import coredevices.pebble.drewBuildVersion
 import coredevices.pebble.health.HealthSyncTracker
 import coredevices.pebble.health.PlatformHealthSync
 import coredevices.pebble.rememberLibPebble
@@ -153,7 +154,6 @@ import coredevices.ui.ConfirmDialog
 import coredevices.ui.CoreLinearProgressIndicator
 import coredevices.ui.M3Dialog
 import coredevices.ui.SignInDialog
-import coredevices.util.CommonBuildKonfig
 import coredevices.util.CoreConfig
 import coredevices.util.CoreConfigHolder
 import coredevices.util.Permission
@@ -738,7 +738,7 @@ fun rememberSettingsItemsState(navBarNav: NavBarNav?, snackbarDisplay: SnackbarD
                     item = {
                         ListItem(
                             headlineContent = {
-                                Text("App Version: ${CommonBuildKonfig.GIT_HASH.takeIf { "-drew." in it } ?: appVersion.version}")
+                                Text("App Version: ${appVersion.drewBuildVersion()}")
                             },
                             shadowElevation = ELEVATION,
                         )

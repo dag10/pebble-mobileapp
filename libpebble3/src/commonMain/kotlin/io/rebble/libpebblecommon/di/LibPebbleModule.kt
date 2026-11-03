@@ -94,6 +94,8 @@ import io.rebble.libpebblecommon.connection.endpointmanager.blobdb.BlobDB
 import io.rebble.libpebblecommon.connection.endpointmanager.blobdb.BlobDbDaos
 import io.rebble.libpebblecommon.connection.endpointmanager.blobdb.RealTimeProvider
 import io.rebble.libpebblecommon.connection.endpointmanager.blobdb.TimeProvider
+import io.rebble.libpebblecommon.connection.endpointmanager.drew.DrewPhoneBuild
+import io.rebble.libpebblecommon.connection.endpointmanager.drew.DrewProtocolManager
 import io.rebble.libpebblecommon.connection.endpointmanager.musiccontrol.MusicControlManager
 import io.rebble.libpebblecommon.connection.endpointmanager.phonecontrol.PhoneControlManager
 import io.rebble.libpebblecommon.connection.endpointmanager.putbytes.PutBytesSession
@@ -358,6 +360,7 @@ fun initKoin(
     transcriptionProvider: TranscriptionProvider,
     injectedPKJSHttpInterceptors: InjectedPKJSHttpInterceptors,
     pluginOAuthApi: PluginOAuthApi? = null,
+    drewPhoneBuild: DrewPhoneBuild = DrewPhoneBuild(""),
 ): Koin {
     val koin = LibPebbleKoinContext.koin
     val libPebbleScope = LibPebbleCoroutineScope(CoroutineName("libpebble3"))
@@ -374,6 +377,7 @@ fun initKoin(
 
                 single { Settings() }
                 single { appContext }
+                single { drewPhoneBuild }
                 single { webServices }
                 single { tokenProvider }
                 single { transcriptionProvider }
@@ -590,7 +594,7 @@ fun initKoin(
                             get(), get(), get(),
                             get(), get(), get(),
                             get(), get(), get(), get(), get(),
-                            get(), get(),
+                            get(), get(), get(),
                         )
                     } bind PebbleConnector::class
                     scopedOf(::PebbleProtocolRunner)
@@ -640,6 +644,7 @@ fun initKoin(
                     scopedOf(::BlobDB)
                     scopedOf(::PhoneControlManager)
                     scopedOf(::FindPhoneManager)
+                    scopedOf(::DrewProtocolManager)
                     scopedOf(::MusicControlManager)
                     scopedOf(::AppOrderManager)
                     scopedOf(::RealLanguagePackInstaller) bind LanguagePackInstaller::class
