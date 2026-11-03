@@ -14,6 +14,7 @@ import io.rebble.libpebblecommon.connection.LibPebble
 import io.rebble.libpebblecommon.connection.PebbleIdentifier
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdateTrigger
 import io.rebble.libpebblecommon.connection.endpointmanager.FirmwareUpdater.FirmwareUpdateStatus
+import io.rebble.libpebblecommon.services.isDrewPebbleOs
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -22,7 +23,7 @@ import kotlin.time.Duration.Companion.hours
 interface FirmwareUpdateUiTracker {
     fun didFirmwareUpdateCheckFromUi()
     fun shouldUiUpdateCheck(): Boolean
-    fun onConnectedWatch(watch: CommonConnectedDevice)
+    fun onConnectedWatch(watch: CommonConnectedDevice, offerVanillaUpdate: Boolean = true)
     fun updateWatchNow(libPebble: LibPebble, identifier: String)
 }
 
@@ -53,7 +54,7 @@ class RealFirmwareUpdateUiTracker(
         return shouldCheck
     }
 
-    override fun onConnectedWatch(watch: CommonConnectedDevice) {
+    override fun onConnectedWatch(watch: CommonConnectedDevice, offerVanillaUpdate: Boolean) {
         if (watch.firmwareUpdateState is FirmwareUpdateStatus.Active) {
             logger.d { "Firmware update in progress; removing notification" }
             removeNotification(watch.identifier.asString)
@@ -73,13 +74,16 @@ class RealFirmwareUpdateUiTracker(
             logger.d { "Not doing notification of auto-update because watch is running a local build" }
             return
         }
+        val runningDrewPebbleOs = watch.watchInfo.runningFwVersion.isDrewPebbleOs()
         val update = watch.firmwareUpdateAvailable.result as? FirmwareUpdateCheckResult.FoundUpdate ?: return
+        if (!offerVanillaUpdate) return
         val key = update.hashCode() + watch.identifier.asString.hashCode()
         val config = coreConfigFlow.value
         val now = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
         // Recovery mode, and an update that has to go through it, are left to the user.
         if (config.autoFirmwareUpdate &&
             update.installsDirectly &&
+            !runningDrewPebbleOs &&
             watch is ConnectedPebbleDevice &&
             config.autoFirmwareUpdateWindow?.contains(now) != false &&
             watch.firmwareUpdateState is FirmwareUpdateStatus.NotInProgress &&
