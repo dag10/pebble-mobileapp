@@ -61,15 +61,7 @@ class DrewProtocolManagerTest {
 
     @Test
     fun announcesWhatThePhoneImplements() {
-        assertEquals(
-            DrewFeatures.of(
-                DrewFeature.Updates,
-                DrewFeature.Heartbeat,
-                DrewFeature.FindPhone,
-                DrewFeature.NotificationFlags,
-            ),
-            localDrewFeatures(LibPebbleConfig()),
-        )
+        assertEquals(ALL_FEATURES, localDrewFeatures(LibPebbleConfig()))
         val noHeartbeat = LibPebbleConfig(bleConfig = BleConfig(drewHeartbeat = false))
         assertFalse(DrewFeature.Heartbeat in localDrewFeatures(noHeartbeat))
     }
