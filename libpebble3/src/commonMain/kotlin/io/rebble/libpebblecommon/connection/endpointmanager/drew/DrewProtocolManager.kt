@@ -6,6 +6,7 @@ import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
+import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.packets.DrewFeature
 import io.rebble.libpebblecommon.packets.DrewFeatures
 import io.rebble.libpebblecommon.packets.DrewHeartbeat
@@ -31,6 +32,7 @@ data class DrewPhoneBuild(val version: String)
 internal fun localDrewFeatures(config: LibPebbleConfig): DrewFeatures = DrewFeatures.of(
     listOfNotNull(
         DrewFeature.Updates,
+        DrewFeature.Heartbeat.takeIf { config.bleConfig.drewHeartbeat },
         DrewFeature.FindPhone,
     )
 )
@@ -60,7 +62,11 @@ class DrewProtocolManager(
             protocolHandler.inboundMessages.collect { packet ->
                 when (packet) {
                     is DrewHello.Watch -> onWatchHello(packet)
-                    is DrewHeartbeat -> protocolHandler.send(DrewHeartbeatAck(packet.cookie.get()))
+                    is DrewHeartbeat -> {
+                        logger.d { "Heartbeat ${packet.cookie.get()}" }
+                        DrewExperiments.count(DrewExperiments.HEARTBEAT_PING, "Heartbeat ${packet.cookie.get()}")
+                        protocolHandler.send(DrewHeartbeatAck(packet.cookie.get()))
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
 package io.rebble.libpebblecommon.connection.endpointmanager.drew
 
 import TestPebbleProtocolHandler
+import io.rebble.libpebblecommon.BleConfig
 import io.rebble.libpebblecommon.LibPebbleConfig
 import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
@@ -61,9 +62,34 @@ class DrewProtocolManagerTest {
     @Test
     fun announcesWhatThePhoneImplements() {
         assertEquals(
-            DrewFeatures.of(DrewFeature.Updates, DrewFeature.FindPhone),
+            DrewFeatures.of(DrewFeature.Updates, DrewFeature.Heartbeat, DrewFeature.FindPhone),
             localDrewFeatures(LibPebbleConfig()),
         )
+        val noHeartbeat = LibPebbleConfig(bleConfig = BleConfig(drewHeartbeat = false))
+        assertFalse(DrewFeature.Heartbeat in localDrewFeatures(noHeartbeat))
+    }
+
+    @Test
+    fun tellsTheWatchWhenTheHeartbeatSettingChanges() = runTest {
+        val manager = manager()
+        receive(DrewHello.Watch(features = ALL_FEATURES))
+        assertTrue(DrewFeature.Heartbeat in manager.drewFeatures.value)
+
+        config.value = LibPebbleConfig(bleConfig = BleConfig(drewHeartbeat = false))
+        runCurrent()
+
+        val hello = assertIs<DrewHello.Phone>(sent.single())
+        assertFalse(hello.replyRequested)
+        assertFalse(DrewFeature.Heartbeat in hello.features)
+        assertFalse(DrewFeature.Heartbeat in manager.drewFeatures.value)
+    }
+
+    @Test
+    fun keepsQuietAboutSettingChangesBeforeTheWatchSaysHello() = runTest {
+        manager()
+        config.value = LibPebbleConfig(bleConfig = BleConfig(drewHeartbeat = false))
+        runCurrent()
+        assertTrue(sent.isEmpty())
     }
 
     @Test

@@ -1,14 +1,12 @@
 package io.rebble.libpebblecommon.services
 
 import co.touchlab.kermit.Logger
-import io.rebble.libpebblecommon.LibPebbleConfigFlow
 import io.rebble.libpebblecommon.WatchConfigFlow
 import io.rebble.libpebblecommon.connection.ConnectedPebble
 import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
 import io.rebble.libpebblecommon.connection.PhoneCapabilities
 import io.rebble.libpebblecommon.connection.PlatformFlags
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
-import io.rebble.libpebblecommon.drew.DrewExperiments
 import io.rebble.libpebblecommon.metadata.WatchColor
 import io.rebble.libpebblecommon.metadata.WatchColor.Pebble2DuoBlack
 import io.rebble.libpebblecommon.metadata.WatchColor.Pebble2DuoWhite
@@ -53,7 +51,6 @@ class SystemService(
     private val phoneCapabilities: PhoneCapabilities,
     private val platformFlags: PlatformFlags,
     private val watchConfig: WatchConfigFlow,
-    private val libPebbleConfigFlow: LibPebbleConfigFlow,
 ) : ProtocolService,
     ConnectedPebble.Debug, ConnectedPebble.Time {
     private val logger = Logger.withTag("SystemService")
@@ -103,12 +100,7 @@ class SystemService(
 
     private fun capabilitiesToSend(): List<ProtocolCapsFlag> {
         val caps = phoneCapabilities.capabilities.toList()
-        val upstreamCaps = if (watchConfig.value.notificationWindowState) caps else caps - ProtocolCapsFlag.SupportsNotificationWindowState
-        return if (libPebbleConfigFlow.value.bleConfig.drewHeartbeat) {
-            upstreamCaps + ProtocolCapsFlag.SupportsDrewHeartbeat
-        } else {
-            upstreamCaps
-        }
+        return if (watchConfig.value.notificationWindowState) caps else caps - ProtocolCapsFlag.SupportsNotificationWindowState
     }
 
     suspend fun sendPhoneVersionResponse() {
@@ -228,12 +220,6 @@ class SystemService(
                         pongCallback = null
                     }
 
-                    is PingPong.Ping -> {
-                        logger.d { "Ping from the watch: cookie=${packet.cookie.get()}" }
-                        DrewExperiments.count(DrewExperiments.HEARTBEAT_PING, "Heartbeat ping ${packet.cookie.get()}")
-                        protocolHandler.send(PingPong.Pong(packet.cookie.get()))
-                    }
-
                     is TimeMessage.GetTimeUtcRequest-> {
                         updateTime()
                     }
@@ -277,14 +263,6 @@ class SystemService(
 private val FIRMWARE_UPDATE_STATUS_TIMEOUT = 15.seconds
 
 private val FIRMWARE_VERSION_REGEX = Regex("v?([0-9]+)\\.([0-9]+)(?:\\.([0-9]+))?(?:-(.*))?")
-
-private val DREW_BUILD_REGEX = Regex("-drew\\.([0-9]+)")
-
-/** The N in a `vX.Y.Z-drew.N` version, or null for a build that isn't DrewPebbleOS. */
-fun drewBuildNumber(version: String): Int? =
-    DREW_BUILD_REGEX.find(version)?.groupValues?.get(1)?.toIntOrNull()
-
-fun FirmwareVersion.isDrewPebbleOs(): Boolean = drewBuildNumber(stringVersion) != null
 
 data class FirmwareVersion(
     val stringVersion: String,

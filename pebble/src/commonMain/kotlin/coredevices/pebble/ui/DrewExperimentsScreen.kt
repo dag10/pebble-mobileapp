@@ -68,7 +68,7 @@ fun drewExperimentsSettingsItems(
         },
         basicSettingsToggleItem(
             title = "Watch heartbeat",
-            description = "Ask DrewPebbleOS (drew.5 or later) to ping the phone every 5 minutes, which wakes the app so the Focus catch-up runs. Takes effect on the next watch connection",
+            description = "Ask DrewPebbleOS for a heartbeat every 5 minutes, which wakes the app so the Focus catch-up runs",
             topLevelType = TopLevelType.Phone,
             section = Section.DrewExperiments,
             checked = bleConfig.drewHeartbeat,
