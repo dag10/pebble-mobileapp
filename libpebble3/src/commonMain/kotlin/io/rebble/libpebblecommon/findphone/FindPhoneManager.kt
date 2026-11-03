@@ -3,7 +3,7 @@ package io.rebble.libpebblecommon.findphone
 import co.touchlab.kermit.Logger
 import io.rebble.libpebblecommon.connection.PebbleProtocolHandler
 import io.rebble.libpebblecommon.di.ConnectionCoroutineScope
-import io.rebble.libpebblecommon.packets.SystemMessage
+import io.rebble.libpebblecommon.packets.DrewFindPhone
 import io.rebble.libpebblecommon.plugin.PhoneSoundPlayer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -42,7 +42,7 @@ class FindPhoneManager(
         protocolHandler.inboundMessages
             .onEach {
                 when (it) {
-                    is SystemMessage.DrewFindPhone -> {
+                    is DrewFindPhone.Start -> {
                         if (upstreamRinging) {
                             logger.i { "Watch asked to find the phone; already ringing for Find My Phone" }
                         } else {
@@ -50,7 +50,7 @@ class FindPhoneManager(
                             phoneRinger.ring()
                         }
                     }
-                    is SystemMessage.DrewFindPhoneStop -> {
+                    is DrewFindPhone.Stop -> {
                         logger.i { "Watch asked to stop finding the phone" }
                         if (!upstreamRinging) phoneRinger.stop()
                     }

@@ -31,6 +31,7 @@ data class DrewPhoneBuild(val version: String)
 internal fun localDrewFeatures(config: LibPebbleConfig): DrewFeatures = DrewFeatures.of(
     listOfNotNull(
         DrewFeature.Updates,
+        DrewFeature.FindPhone,
     )
 )
 
