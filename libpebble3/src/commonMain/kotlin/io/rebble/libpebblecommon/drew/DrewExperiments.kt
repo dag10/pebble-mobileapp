@@ -53,7 +53,7 @@ object DrewExperiments {
         /** The Focus catch-up check sends the state iOS reports, rather than only logging drift. */
         val focusCatchUpSends: Boolean = true,
         /** Post a "Focus debug" iPhone notification for Focus events. */
-        val focusNotifications: Boolean = true,
+        val focusNotifications: Boolean = false,
     )
 
     private const val SETTINGS_KEY = "drew_experiments"

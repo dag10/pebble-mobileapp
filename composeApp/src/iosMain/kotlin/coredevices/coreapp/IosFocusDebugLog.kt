@@ -25,7 +25,7 @@ import kotlin.time.Clock
  * A temporary trail of everything the iOS Focus Quiet Time code sees, for debugging Focus changes
  * that never reach the watch. Each line goes to Documents/focus-debug.log (kept apart from the
  * main log, which rolls over in hours) and the main log, and some also post an iPhone
- * notification (Settings > Drew Experiments can turn those off). Lines also go to
+ * notification (off by default; Settings > Drew Experiments turns them on). Lines also go to
  * [DrewExperiments], which that screen shows.
  *
  * Pull the file from a Mac with:
