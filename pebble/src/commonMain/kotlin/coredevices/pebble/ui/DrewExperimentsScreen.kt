@@ -94,7 +94,7 @@ fun drewExperimentsSettingsItems(
         ),
         basicSettingsToggleItem(
             title = "Focus debug notifications",
-            description = "Post a \"Focus debug\" iPhone notification for Focus Filter runs, fixes, timeouts and drift",
+            description = "Post a \"Focus debug\" iPhone notification for Focus Filter runs, fixes, timeouts and drift. Off by default",
             topLevelType = TopLevelType.Phone,
             section = Section.DrewExperiments,
             checked = drewState.focusNotifications,
